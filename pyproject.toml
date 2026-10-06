@@ -16,6 +16,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License"
 ]
 dependencies = [
+    "duckdb>=1.5.6",
     "ipython",
     "jupyterlab",
     "loguru",
@@ -23,12 +24,14 @@ dependencies = [
     "mkdocs",
     "notebook",
     "numpy",
+    "openpyxl>=3.1.5",
     "pandas",
     "pip",
     "pytest",
     "python-dotenv",
     "ruff",
     "scikit-learn",
+    "seaborn>=0.13.2",
     "tqdm",
     "typer",
 ]
