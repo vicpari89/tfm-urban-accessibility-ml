@@ -26,6 +26,7 @@ dependencies = [
     "numpy",
     "openpyxl>=3.1.5",
     "pandas",
+    "pandas-stubs~=2.3.3",
     "pip",
     "pytest",
     "python-dotenv",

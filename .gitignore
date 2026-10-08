@@ -192,5 +192,7 @@ cython_debug/
 
 # Draft files
 *-draft.*
+
 uv.lock
 .vscode/settings.json
+.idea/
