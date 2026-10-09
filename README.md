@@ -28,8 +28,6 @@ This repository structure was generated using [Cookiecutter Data Science v2 (CCD
 * **open_source_license:** `MIT` — Permissive open-source license.
 * **docs:** `mkdocs` — Markdown-based documentation framework with `mkdocs-material` support.
 * **include_code_scaffold:** `Yes` — Includes initial boilerplates for modules (`dataset.py`, `features.py`, etc.) and basic test structures.
-</code></pre>
-
 
 ## Project Organization
 
@@ -52,17 +50,14 @@ This repository structure was generated using [Cookiecutter Data Science v2 (CCD
 │                         `1.0-jqp-initial-data-exploration`.
 │
 ├── pyproject.toml     <- Project configuration file with package metadata for 
-│                         urban_accessibility_ml and configuration for tools like black
+│                         urban_accessibility_ml and configuration for tools like ruff
 │
 ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
 │
 ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
 │   └── figures        <- Generated graphics and figures to be used in reporting
 │
-├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-│                         generated with `pip freeze > requirements.txt`
-│
-├── setup.cfg          <- Configuration file for flake8
+├── uv.lock            <- Locked dependency versions for reproducible environments
 │
 └── urban_accessibility_ml   <- Source code for use in this project.
     │
@@ -70,7 +65,7 @@ This repository structure was generated using [Cookiecutter Data Science v2 (CCD
     │
     ├── config.py               <- Store useful variables and configuration
     │
-    ├── dataset.py              <- Scripts to download or generate data
+    ├── dataset.py              <- Verifies the raw data is present in `data/raw/`
     │
     ├── features.py             <- Code to create features for modeling
     │
@@ -81,5 +76,29 @@ This repository structure was generated using [Cookiecutter Data Science v2 (CCD
     │
     └── plots.py                <- Code to create visualizations
 ```
+
+--------
+
+## 📊 Data Access & Reproducibility
+
+The raw datasets for Albacete (`.sql` scripts) and Algeciras (`.xlsx` files) are archived on Zenodo under Restricted Access:
+
+* **Zenodo Record:** [https://zenodo.org/records/23168998](https://zenodo.org/records/23168998)
+* **Access Rights:** Restricted to academic evaluation for UOC Master's Thesis.
+
+### Local Setup Instructions
+
+1. Install dependencies:
+   ```bash
+   uv sync
+   ```
+2. Request access to the Zenodo record ([https://zenodo.org/records/23168998](https://zenodo.org/records/23168998)) and download the files manually.
+3. Place them in the following directories:
+   * Albacete SQL scripts (`albacete_1.sql`, `zz_gis_e.sql`, `zz_gis_v.sql`) -> `data/raw/albacete/`
+   * Algeciras Excel files (`260518_Tabla_resultados_Edificios_Algeciras.xlsx`, `260522_Tabla_resultados_Viario_Algeciras.xlsx`) -> `data/raw/algeciras/`
+4. Verify that all files are in place:
+   ```bash
+   uv run python -m urban_accessibility_ml.dataset
+   ```
 
 --------
