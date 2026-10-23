@@ -16,7 +16,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License"
 ]
 dependencies = [
+    "contextily>=1.7.1",
     "duckdb>=1.5.6",
+    "geopandas>=1.1.4",
     "ipython",
     "jupyterlab",
     "loguru",
@@ -25,11 +27,14 @@ dependencies = [
     "notebook",
     "numpy",
     "openpyxl>=3.1.5",
+    "osmnx>=2.0.7",
     "pandas",
     "pandas-stubs~=2.3.3",
     "pip",
+    "pymupdf>=1.28.2",
     "pytest",
     "python-dotenv",
+    "rapidfuzz>=3.14.5",
     "ruff",
     "scikit-learn",
     "seaborn>=0.13.2",
