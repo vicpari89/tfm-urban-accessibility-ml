@@ -68,6 +68,16 @@ data: requirements
 	$(PYTHON_INTERPRETER) urban_accessibility_ml/dataset.py
 
 
+## Regenerate data/processed/streets_unified.csv (runs notebooks 0.01-0.05 in order)
+.PHONY: unified
+unified:
+	@out=$$(mktemp -d) && \
+	for nb in notebooks/0.0[1-5]-*.ipynb; do \
+		echo ">>> $$nb"; \
+		$(PYTHON_INTERPRETER) -m jupyter nbconvert --to notebook --execute --output-dir $$out $$nb || exit 1; \
+	done; rm -rf $$out
+
+
 #################################################################################
 # Self Documenting Commands                                                     #
 #################################################################################
