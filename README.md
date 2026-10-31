@@ -29,6 +29,28 @@ This repository structure was generated using [Cookiecutter Data Science v2 (CCD
 * **docs:** `mkdocs` — Markdown-based documentation framework with `mkdocs-material` support.
 * **include_code_scaffold:** `Yes` — Includes initial boilerplates for modules (`dataset.py`, `features.py`, etc.) and basic test structures.
 
+## Reproducing the unified dataset
+
+The raw data (ACCESIA, Albacete and Algeciras) is not in the repository: download it from [Zenodo](https://zenodo.org/records/23168998) and place it in `data/raw/albacete/` and `data/raw/algeciras/`.
+
+```
+data/raw ──(make data: dataset.py)──> data/interim ──(pipeline.py)──> data/processed
+```
+
+| Command | What it does |
+|---|---|
+| `make data` | Checks the raw files, cleans, unifies and validates them (`DatasetPipeline` in `urban_accessibility_ml/pipeline.py`, launched by `urban_accessibility_ml/dataset.py`). |
+| `make unified` | Same result, running the notebooks `0.01` to `0.05` in order (they run on temporary copies, so the notebooks in the repository are not modified). |
+| `make test` | Unit tests, and quality checks of `data/processed/streets_unified.csv`. |
+
+Both routes give identical files. They write:
+
+* `data/interim/{algeciras,albacete}/*_streets_cleaned.csv`: the cleaned streets of each city.
+* `data/processed/streets_unified.csv`: one row per street section (`ciudad` + `id_tramo`) with the same columns for both cities: `barrio`, street data, scores scaled to 0-1 (total, per dimension and per profile: functional, sensory and cognitive) and the classes A, B and C (total and per profile).
+* `data/processed/albacete_profiles.csv`: the five original profiles of Albacete (wheelchair, reduced mobility, visual, hearing and cognitive), joined by `id_tramo`.
+
+The pipeline also writes the streets with geometry to `data/interim/<city>/<city>_streets_geo.geojson` (Algeciras needs the cached OSM file `data/external/algeciras/osm_streets_by_name.gpkg`, or internet to download it). The maps of notebooks `0.03` and `0.04` are not part of the pipeline. Run the commands with `uv run make ...` if the virtual environment is not activated.
+
 ## Project Organization
 
 ```
@@ -65,9 +87,12 @@ This repository structure was generated using [Cookiecutter Data Science v2 (CCD
     │
     ├── config.py               <- Store useful variables and configuration
     │
-    ├── dataset.py              <- Verifies the raw data is present in `data/raw/`
+    ├── dataset.py              <- Orchestrator: runs `DatasetPipeline`, or notebooks 0.01-0.05 with `--notebooks`
     │
-    ├── features.py             <- Code to create features for modeling
+    ├── pipeline.py             <- `DatasetPipeline`: checks, cleans and unifies the data into `data/processed/`
+    ├── pipeline_algeciras.py   <- Algeciras-specific cleaning, geometry (KML + OSM) and unification
+    ├── pipeline_albacete.py    <- Albacete-specific cleaning, geometry and unification
+    ├── pipeline_common.py      <- Helpers shared by both cities
     │
     ├── modeling                
     │   ├── __init__.py 

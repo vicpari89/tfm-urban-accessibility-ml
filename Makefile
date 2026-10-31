@@ -62,10 +62,16 @@ create_environment:
 #################################################################################
 
 
-## Make dataset
+## Make dataset: clean data/raw into data/interim and unify it into data/processed
 .PHONY: data
 data: requirements
-	$(PYTHON_INTERPRETER) urban_accessibility_ml/dataset.py
+	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.dataset
+
+
+## Same as `make data`, but running the notebooks 0.01-0.05 in order
+.PHONY: unified
+unified: requirements
+	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.dataset --notebooks
 
 
 #################################################################################
