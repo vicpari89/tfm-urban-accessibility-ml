@@ -68,7 +68,7 @@ data: requirements
 	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.dataset
 
 
-## Same as `make data`, but running the notebooks 0.01-0.05 in order
+## Same as `make data`, but running the notebooks 0.01-0.06 in order
 .PHONY: unified
 unified: requirements
 	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.dataset --notebooks
