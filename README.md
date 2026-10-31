@@ -40,7 +40,7 @@ data/raw ──(make data: dataset.py)──> data/interim ──(pipeline.py)�
 | Command | What it does |
 |---|---|
 | `make data` | Checks the raw files, cleans, unifies and validates them (`DatasetPipeline` in `urban_accessibility_ml/pipeline.py`, launched by `urban_accessibility_ml/dataset.py`). |
-| `make unified` | Same result, running the notebooks `0.01` to `0.05` in order (they run on temporary copies, so the notebooks in the repository are not modified). |
+| `make unified` | Same result, running the notebooks `0.01` to `0.06` in order (they run on temporary copies, so the notebooks in the repository are not modified). |
 | `make test` | Unit tests, and quality checks of `data/processed/streets_unified.csv`. |
 
 Both routes give identical files. They write:
@@ -87,7 +87,7 @@ The pipeline also writes the streets with geometry to `data/interim/<city>/<city
     │
     ├── config.py               <- Store useful variables and configuration
     │
-    ├── dataset.py              <- Orchestrator: runs `DatasetPipeline`, or notebooks 0.01-0.05 with `--notebooks`
+    ├── dataset.py              <- Orchestrator: runs `DatasetPipeline`, or notebooks 0.01-0.06 with `--notebooks`
     │
     ├── pipeline.py             <- `DatasetPipeline`: checks, cleans and unifies the data into `data/processed/`
     ├── pipeline_algeciras.py   <- Algeciras-specific cleaning, geometry (KML + OSM) and unification

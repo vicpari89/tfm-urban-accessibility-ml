@@ -1,4 +1,4 @@
-"""Orchestrator: build the dataset from data/raw/, either with the code or running the notebooks 0.01-0.05 in order."""
+"""Orchestrator: build the dataset from data/raw/, either with the code or running the notebooks 0.01-0.06 in order."""
 
 import glob
 from pathlib import Path
@@ -13,7 +13,7 @@ from urban_accessibility_ml.pipeline import DatasetPipeline
 
 app = typer.Typer(help=__doc__)
 
-NOTEBOOKS = sorted(glob.glob(str(Path(__file__).parents[1] / "notebooks" / "0.0[1-5]-*.ipynb")))
+NOTEBOOKS = sorted(glob.glob(str(Path(__file__).parents[1] / "notebooks" / "0.0[1-6]-*.ipynb")))
 
 
 def run_notebooks() -> None:
