@@ -2,16 +2,22 @@ import pandas as pd
 import pytest
 
 from urban_accessibility_ml.config import PROCESSED_DATA_DIR
+from urban_accessibility_ml.pipeline_algeciras import section_number
+from urban_accessibility_ml.pipeline_common import base_name, class_by_thirds
 
 UNIFIED_FILE = PROCESSED_DATA_DIR / "streets_unified.csv"
-CLASS_COLUMNS = {"clase_total": "puntuacion_total", "clase_funcional": "puntuacion_total_funcional",
-                 "clase_sensorial": "puntuacion_total_sensorial", "clase_cognitiva": "puntuacion_total_cognitiva"}
+CLASS_COLUMNS = {
+    "clase_total": "puntuacion_total",
+    "clase_funcional": "puntuacion_total_funcional",
+    "clase_sensorial": "puntuacion_total_sensorial",
+    "clase_cognitiva": "puntuacion_total_cognitiva",
+}
 
 
 @pytest.fixture(scope="module")
 def df():
     if not UNIFIED_FILE.exists():
-        pytest.skip("data/processed/streets_unified.csv not generated (run notebook 0.05)")
+        pytest.skip("data/processed/streets_unified.csv not generated (run `make data`)")
     return pd.read_csv(UNIFIED_FILE, dtype={"id_tramo": str})
 
 
@@ -30,3 +36,16 @@ def test_street_and_class_counts(df):
     for class_column, score_column in CLASS_COLUMNS.items():
         assert (df.loc[df[class_column] == "A", score_column] >= 2 / 3).all()
         assert (df.loc[df[class_column] == "C", score_column] < 1 / 3).all()
+
+
+def test_class_by_thirds():
+    scores = pd.Series([0, 1 / 3 - 0.01, 1 / 3, 2 / 3 - 0.01, 2 / 3, 1])
+    assert class_by_thirds(scores, 1).tolist() == ["C", "C", "B", "B", "A", "A"]
+
+
+def test_section_of_the_street():
+    assert base_name("Calle Jorge Juan 2") == "CALLE JORGE JUAN"
+    assert base_name("Calle Ángel B", r"\d+|[A-C]") == "CALLE ANGEL"
+    assert section_number("Calle Ángel", "0004B") == 2  # the letter of the reference wins
+    assert section_number("Calle Ángel C", "0004") == 3
+    assert section_number("Calle Ángel", "0004") is pd.NA

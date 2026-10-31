@@ -1,31 +1,43 @@
-"""Verify that the raw data is present in data/raw/."""
+"""Orchestrator: build the dataset from data/raw/, either with the code or running the notebooks 0.01-0.05 in order."""
+
+import glob
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
 
 from loguru import logger
 import typer
 
-from urban_accessibility_ml.config import RAW_DATA_DIR
+from urban_accessibility_ml.pipeline import DatasetPipeline
 
 app = typer.Typer(help=__doc__)
 
-ZENODO_RECORD_URL = "https://zenodo.org/records/23168998"
+NOTEBOOKS = sorted(glob.glob(str(Path(__file__).parents[1] / "notebooks" / "0.0[1-5]-*.ipynb")))
 
-REQUIRED_FILES = (
-    RAW_DATA_DIR / "albacete" / "albacete_1.sql",
-    RAW_DATA_DIR / "albacete" / "zz_gis_e.sql",
-    RAW_DATA_DIR / "albacete" / "zz_gis_v.sql",
-    RAW_DATA_DIR / "algeciras" / "260518_Tabla_resultados_Edificios_Algeciras.xlsx",
-    RAW_DATA_DIR / "algeciras" / "260522_Tabla_resultados_Viario_Algeciras.xlsx",
-)
+
+def run_notebooks() -> None:
+    """Execute the notebooks in order on temporary copies, so the repository ones are not modified."""
+    with tempfile.TemporaryDirectory() as out:
+        for nb in NOTEBOOKS:
+            logger.info(nb)
+            subprocess.run(
+                [sys.executable, "-m", "jupyter", "nbconvert", "--to", "notebook", "--execute",
+                 "--output-dir", out, nb],
+                check=True,
+            )  # fmt: skip
 
 
 @app.command()
-def main() -> None:
-    """Check the raw files exist; otherwise point to the Zenodo record."""
-    if missing := [f for f in REQUIRED_FILES if not f.exists()]:
-        logger.error(f"Missing raw files: {[str(f.relative_to(RAW_DATA_DIR)) for f in missing]}")
-        logger.info(f"Download them from {ZENODO_RECORD_URL} and place them in {RAW_DATA_DIR}")
+def main(
+    notebooks: bool = typer.Option(False, help="Run the notebooks instead of the code."),
+) -> None:
+    """Build data/interim/ and data/processed/."""
+    try:
+        run_notebooks() if notebooks else DatasetPipeline().run()
+    except FileNotFoundError as e:
+        logger.error(e)
         raise typer.Exit(code=1)
-    logger.success("Raw data present in data/raw/. Ready to continue.")
 
 
 if __name__ == "__main__":

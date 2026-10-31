@@ -62,20 +62,16 @@ create_environment:
 #################################################################################
 
 
-## Make dataset
+## Make dataset: clean data/raw into data/interim and unify it into data/processed
 .PHONY: data
 data: requirements
-	$(PYTHON_INTERPRETER) urban_accessibility_ml/dataset.py
+	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.dataset
 
 
-## Regenerate data/processed/streets_unified.csv (runs notebooks 0.01-0.05 in order)
+## Same as `make data`, but running the notebooks 0.01-0.05 in order
 .PHONY: unified
-unified:
-	@out=$$(mktemp -d) && \
-	for nb in notebooks/0.0[1-5]-*.ipynb; do \
-		echo ">>> $$nb"; \
-		$(PYTHON_INTERPRETER) -m jupyter nbconvert --to notebook --execute --output-dir $$out $$nb || exit 1; \
-	done; rm -rf $$out
+unified: requirements
+	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.dataset --notebooks
 
 
 #################################################################################
