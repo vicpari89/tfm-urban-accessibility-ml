@@ -32,7 +32,7 @@ def main() -> None:
     with request(f"{API}/files", token) as response:
         entries = json.load(response).get("entries", [])
 
-    # file name -> content, from the loose files and from inside the zips of the record
+    # file name -> content, from the loose files and from inside the zips of the record (the record has the zip and 2 loose files)
     contents: dict[str, bytes] = {}
     for entry in entries:
         with request(f"{API}/files/{quote(entry['key'])}/content", token) as response:
