@@ -1,15 +1,18 @@
 """Download the raw files (the restricted Zenodo record) into data/raw/, for the GitHub Actions workflow.
 
 Needs the environment variable ZENODO_TOKEN (a Zenodo personal access token of an account with access).
-Each required file (REQUIRED_FILES of pipeline.py) is matched by its file name with the files of the record.
+Each required file (REQUIRED_FILES of pipeline.py) is matched by its file name with the files of the record,
+including the ones inside a zip.
 """
 
+import io
 import json
 import os
 from pathlib import Path
 import sys
 from urllib.parse import quote
 from urllib.request import Request, urlopen
+import zipfile
 
 from urban_accessibility_ml.pipeline import REQUIRED_FILES, ZENODO_RECORD_URL
 
@@ -28,16 +31,25 @@ def main() -> None:
 
     with request(f"{API}/files", token) as response:
         entries = json.load(response).get("entries", [])
-    keys = {Path(e["key"]).name: e["key"] for e in entries}
 
-    missing = [f.name for f in REQUIRED_FILES if f.name not in keys]
+    # file name -> content, from the loose files and from inside the zips of the record
+    contents: dict[str, bytes] = {}
+    for entry in entries:
+        with request(f"{API}/files/{quote(entry['key'])}/content", token) as response:
+            data = response.read()
+        if entry["key"].endswith(".zip"):
+            with zipfile.ZipFile(io.BytesIO(data)) as zf:
+                contents.update({Path(n).name: zf.read(n) for n in zf.namelist() if not n.endswith("/")})
+        else:
+            contents[Path(entry["key"]).name] = data
+
+    missing = [f.name for f in REQUIRED_FILES if f.name not in contents]
     if missing:
-        sys.exit(f"Not in the Zenodo record: {missing}. Files seen: {sorted(keys)}")
+        sys.exit(f"Not in the Zenodo record: {missing}. Files seen: {sorted(contents)}")
 
     for file in REQUIRED_FILES:
         file.parent.mkdir(parents=True, exist_ok=True)
-        with request(f"{API}/files/{quote(keys[file.name])}/content", token) as response:
-            file.write_bytes(response.read())
+        file.write_bytes(contents[file.name])
         print(f"{file.name}: {file.stat().st_size} bytes")
 
 
