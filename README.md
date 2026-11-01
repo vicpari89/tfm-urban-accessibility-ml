@@ -60,15 +60,15 @@ The notebooks are published as a web page (mkdocs-material + mkdocs-jupyter, con
 | `make docs` | Runs the notebooks on temporary copies and builds the site in `docs/site/` (ignored by git). It needs `data/processed/streets_unified.csv` (`python -m urban_accessibility_ml.dataset`, see above), and internet for notebook `0.03`. The notebooks in `notebooks/` are not modified. |
 | `EXECUTE=0 make docs` | Same, without running the notebooks (uses the outputs they already have). |
 
-To publish it manually in GitHub Pages, build the site and put it in the `gh-pages` branch (nothing is published until the `push`):
+It is published automatically in GitHub Pages by `.github/workflows/docs.yml` when a tag is pushed (`git tag v0.1 && git push origin v0.1`), or by hand in the Actions tab. The workflow downloads the raw data from Zenodo (`scripts/download_raw.py`), builds the dataset, runs the notebooks and builds the site. **The executed notebooks are not saved in the repository**: the notebooks are committed without outputs (`nbstripout`).
 
-```
-make docs
-uv run ghp-import -n docs/site   # commits docs/site/ to the local gh-pages branch (-n adds .nojekyll)
-git push origin gh-pages         # publishes it
-```
+One-time setup:
 
-(`mkdocs gh-deploy` does the same, but it rebuilds from `docs/mkdocs.yml`, which cannot see the notebooks outside `docs/docs/`.) In the repository settings, Pages must use the `gh-pages` branch.
+* In every clone, run `uv run nbstripout --install` (the git filter that removes the outputs when committing; your working copy keeps them). The `*.ipynb` rule is in `.gitattributes`.
+* Zenodo: create a personal access token (Settings → Applications) and save it in the repository as the secret `ZENODO_TOKEN` (Settings → Secrets and variables → Actions).
+* GitHub: Settings → Pages → Source: **GitHub Actions**, and Settings → Environments → `github-pages` → Deployment branches and tags: add the tag rule `*`.
+
+To preview it in local: `make docs` (runs the notebooks on temporary copies; needs `data/processed/streets_unified.csv`), or `EXECUTE=0 make docs` (uses the outputs of your working copy, without running them).
 
 ## Project Organization
 
