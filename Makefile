@@ -74,8 +74,14 @@ unified: requirements
 	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.dataset --notebooks
 
 
+## Build the documentation site in docs/site/ (runs the notebooks; EXECUTE=0 skips it)
+.PHONY: docs
+docs:
+	bash scripts/build_docs.sh
+
+
 #################################################################################
-# Self Documenting Commands                                                     #
+# Self Documenting Commands                                                    #
 #################################################################################
 
 .DEFAULT_GOAL := help

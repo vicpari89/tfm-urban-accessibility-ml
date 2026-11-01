@@ -51,6 +51,25 @@ Both routes give identical files. They write:
 
 The pipeline also writes the streets with geometry to `data/interim/<city>/<city>_streets_geo.geojson` (Algeciras needs the cached OSM file `data/external/algeciras/osm_streets_by_name.gpkg`, or internet to download it). The maps of notebooks `0.03` and `0.04` are not part of the pipeline. Run the commands with `uv run make ...` if the virtual environment is not activated.
 
+## Documentation
+
+The notebooks are published as a web page (mkdocs-material + mkdocs-jupyter, config in `docs/mkdocs.yml`).
+
+| Command | What it does |
+|---|---|
+| `make docs` | Runs the notebooks on temporary copies and builds the site in `docs/site/` (ignored by git). It needs `data/processed/streets_unified.csv` (`python -m urban_accessibility_ml.dataset`, see above), and internet for notebook `0.03`. The notebooks in `notebooks/` are not modified. |
+| `EXECUTE=0 make docs` | Same, without running the notebooks (uses the outputs they already have). |
+
+To publish it manually in GitHub Pages, build the site and put it in the `gh-pages` branch (nothing is published until the `push`):
+
+```
+make docs
+uv run ghp-import -n docs/site   # commits docs/site/ to the local gh-pages branch (-n adds .nojekyll)
+git push origin gh-pages         # publishes it
+```
+
+(`mkdocs gh-deploy` does the same, but it rebuilds from `docs/mkdocs.yml`, which cannot see the notebooks outside `docs/docs/`.) In the repository settings, Pages must use the `gh-pages` branch.
+
 ## Project Organization
 
 ```

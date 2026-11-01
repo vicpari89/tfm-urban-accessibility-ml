@@ -56,3 +56,9 @@ extend-select = ["I"]  # Add import sorting
 known-first-party = ["urban_accessibility_ml"]
 force-sort-within-sections = true
 
+[dependency-groups]
+dev = [
+    "mkdocs-jupyter>=0.26.3",
+    "mkdocs-material>=9.7.7",
+]
+

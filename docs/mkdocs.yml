@@ -1,4 +1,24 @@
 site_name: Urban Accessibility ML
-# 
 site_author: Víctor Pariente González
-# 
+site_dir: site  # docs/site/, ignored by git (scripts/build_docs.sh builds from a temporary copy)
+
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocs-jupyter:
+      execute: false  # the notebooks already contain their results (scripts/build_docs.sh runs them first)
+      include_source: true
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Notebooks:
+      - "0.01 Exploratorio Algeciras": notebooks/0.01-exploratory-analysis-algeciras.ipynb
+      - "0.02 Exploratorio Albacete": notebooks/0.02-exploratory-analysis-albacete.ipynb
+      - "0.03 Geoespacial Algeciras": notebooks/0.03-geospatial-algeciras.ipynb
+      - "0.04 Geoespacial Albacete": notebooks/0.04-geospatial-albacete.ipynb
+      - "0.05 Comparación Algeciras-Albacete": notebooks/0.05-comparison-algeciras-albacete.ipynb
+      - "0.06 Análisis de correlaciones": notebooks/0.06-correlation-analysis.ipynb
+      - "0.07 Análisis de la partición": notebooks/0.07-split-analysis.ipynb
