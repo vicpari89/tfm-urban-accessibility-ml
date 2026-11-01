@@ -29,6 +29,8 @@ def test_scores_between_0_and_1(df):
 def test_street_and_class_counts(df):
     assert df["ciudad"].value_counts().to_dict() == {"Albacete": 916, "Algeciras": 506}
     assert not df.duplicated(["ciudad", "id_tramo"]).any()
+    assert df["key_tramo"].is_unique and not df["key_tramo"].isnull().any()
+    assert (df["key_tramo"] == df["ciudad"] + "_" + df["id_tramo"]).all()
     for class_column in CLASS_COLUMNS:
         assert set(df[class_column]) == {"A", "B", "C"}
         assert df[class_column].value_counts().sum() == len(df)
