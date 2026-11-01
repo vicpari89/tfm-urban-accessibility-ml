@@ -28,8 +28,8 @@ def use_style():
     plt.style.use(STYLE_FILE)
 
 
-def save_figure(name: str, folder: str, formats=("png", "pdf"), fig=None):
-    """Save a figure in reports/figures/<folder>/ to use it in the thesis (PNG to view, PDF for LaTeX)."""
+def save_figure(name: str, folder: str, formats=("png",), fig=None):
+    """Save a figure in reports/figures/<folder>/ to use it in the thesis (PNG)."""
     path = FIGURES_DIR / folder
     path.mkdir(parents=True, exist_ok=True)
     fig = fig or plt.gcf()
