@@ -49,6 +49,9 @@ def validate(unified: pd.DataFrame, profiles: pd.DataFrame) -> None:
         "no transport column": not any("transporte" in col for col in unified.columns),
         "id_tramo filled and unique per city": not unified["id_tramo"].isnull().any()
         and not unified.duplicated(["ciudad", "id_tramo"]).any(),
+        "key_tramo is ciudad + id_tramo, filled and unique": unified["key_tramo"].is_unique
+        and not unified["key_tramo"].isnull().any()
+        and (unified["key_tramo"] == unified["ciudad"] + "_" + unified["id_tramo"]).all(),
         "scores between 0 and 1": unified.filter(like="puntuacion_").stack().between(0, 1).all(),
         "classes A, B or C": unified.filter(like="clase_").isin(["A", "B", "C"]).all().all(),
         "profiles are the streets of Albacete": profiles["id_tramo"].is_unique
@@ -114,6 +117,8 @@ class DatasetPipeline:
         unified = pd.concat(
             [unify_algeciras(algeciras), unify_albacete(albacete)], ignore_index=True
         )
+        # id_tramo is only unique per city: key_tramo is unique in the whole dataset
+        unified.insert(2, "key_tramo", unified["ciudad"] + "_" + unified["id_tramo"].astype(str))
         profiles = albacete_profiles(albacete)
         validate(unified, profiles)
 
