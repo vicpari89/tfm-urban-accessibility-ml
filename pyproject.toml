@@ -20,6 +20,7 @@ dependencies = [
     "duckdb>=1.5.6",
     "geopandas>=1.1.4",
     "ipython",
+    "ipywidgets",
     "jupyterlab",
     "lightgbm",
     "loguru",

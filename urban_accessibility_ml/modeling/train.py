@@ -4,6 +4,9 @@ An experiment is a combination of:
 - split: which rows train and which test -> preprocessing/split.py
 - feature set and profile -> preprocessing/features.py
 - model -> modeling/models/...
+
+Flow: preprocessing/split.build_all_splits -> experiments.run_experiments (calls run_one for each
+combination) -> experiments.save_results
 """
 
 import pandas as pd
