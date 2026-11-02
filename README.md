@@ -66,7 +66,7 @@ One-time setup:
 
 * In every clone, run `uv run nbstripout --install` (the git filter that removes the outputs when committing; your working copy keeps them). The `*.ipynb` rule is in `.gitattributes`.
 * Zenodo: create a personal access token (Settings → Applications) and save it in the repository as the secret `ZENODO_TOKEN` (Settings → Secrets and variables → Actions).
-* GitHub: Settings → Pages → Source: **GitHub Actions**, and Settings → Environments → `github-pages` → Deployment branches and tags: add the tag rule `*`.
+* GitHub: Settings → Pages → Source: **GitHub Actions**. (If you restrict the deployment branches and tags of the `github-pages` environment, allow the tags `*`.)
 
 To preview it in local: `make docs` (runs the notebooks on temporary copies; needs `data/processed/streets_unified.csv`), or `EXECUTE=0 make docs` (uses the outputs of your working copy, without running them).
 
