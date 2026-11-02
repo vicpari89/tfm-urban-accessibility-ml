@@ -2,6 +2,8 @@
 
 Docs:
     - API: https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBClassifier
+
+TODO: analyze how to use a parameter similar to CLASS_WEIGHT = "balanced"
 """
 
 from xgboost import XGBClassifier
