@@ -21,8 +21,53 @@ MODELS_DIR = PROJ_ROOT / "models"
 REPORTS_DIR = PROJ_ROOT / "reports"
 FIGURES_DIR = REPORTS_DIR / "figures"
 
-# If tqdm is installed, configure loguru with tqdm.write
-# https://github.com/Delgan/loguru/issues/135
+# Reproducibility constants
+SEED = 42
+N_SPLITS = 5
+
+# Dimensions and profiles
+DIMENSIONS = [
+    "pendiente",
+    "anchura",
+    "pavimento",
+    "cruces",
+    "senalizacion",
+    "iluminacion",
+    "mobiliario",
+]
+PROFILES = ["global", "funcional", "sensorial", "cognitiva"]
+
+# Target columns
+TARGET_COLUMNS = {
+    "global": "clase_total",
+    "funcional": "clase_funcional",
+    "sensorial": "clase_sensorial",
+    "cognitiva": "clase_cognitiva",
+}
+
+# Class order
+CLASS_ORDER = ["C", "B", "A"]
+
+# Viability (coming from the thesis)
+VIABILITY = {
+    "pendiente": {"cartografia": 25, "aerea": 0, "calle": 40},
+    "anchura": {"cartografia": 15, "aerea": 45, "calle": 95},
+    "pavimento": {"cartografia": 0, "aerea": 40, "calle": 30},
+    "cruces": {"cartografia": 20, "aerea": 70, "calle": 50},
+    "mobiliario": {"cartografia": 0, "aerea": 65, "calle": 80},
+    "senalizacion": {"cartografia": 0, "aerea": 10, "calle": 50},
+    "iluminacion": {"cartografia": 0, "aerea": 15, "calle": 30},
+}
+
+# Threshold for adding a dimension as viable
+THRESHOLD = 50
+
+# Feature sets
+FEATURE_SETS = ["cartografico_aereo", "calle", "combinado", "completo"]
+
+# Metrics
+METRICS = ["f1_macro", "balanced_accuracy", "quadratic_weighted_kappa"]
+
 try:
     from tqdm import tqdm
 

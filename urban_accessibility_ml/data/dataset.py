@@ -9,11 +9,11 @@ import tempfile
 from loguru import logger
 import typer
 
-from urban_accessibility_ml.pipeline import DatasetPipeline
+from urban_accessibility_ml.data.pipeline import DatasetPipeline
 
 app = typer.Typer(help=__doc__)
 
-NOTEBOOKS = sorted(glob.glob(str(Path(__file__).parents[1] / "notebooks" / "0.0[1-6]-*.ipynb")))
+NOTEBOOKS = sorted(glob.glob(str(Path(__file__).parents[2] / "notebooks" / "0.0[1-6]-*.ipynb")))
 
 
 def run_notebooks() -> None:

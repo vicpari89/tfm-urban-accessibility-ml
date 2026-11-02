@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from urban_accessibility_ml.config import INTERIM_DATA_DIR, PROCESSED_DATA_DIR, RAW_DATA_DIR
-from urban_accessibility_ml.pipeline_albacete import (
+from urban_accessibility_ml.data.pipeline_albacete import (
     ALBACETE_GEOMETRY_FILE,
     ALBACETE_STREETS_FILE,
     GEO_ALBACETE_FILE,
@@ -15,7 +15,7 @@ from urban_accessibility_ml.pipeline_albacete import (
     clean_albacete,
     unify_albacete,
 )
-from urban_accessibility_ml.pipeline_algeciras import (
+from urban_accessibility_ml.data.pipeline_algeciras import (
     ALGECIRAS_STREETS_FILE,
     GEO_ALGECIRAS_FILE,
     INTERIM_ALGECIRAS_FILE,

@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from urban_accessibility_ml import pipeline_algeciras as alg
+from urban_accessibility_ml.data import pipeline_algeciras as alg
 
 
 @pytest.fixture(scope="module")

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from urban_accessibility_ml import pipeline_albacete as alb
+from urban_accessibility_ml.data import pipeline_albacete as alb
 
 
 @pytest.fixture(scope="module")

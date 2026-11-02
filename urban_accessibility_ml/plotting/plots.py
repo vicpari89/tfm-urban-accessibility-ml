@@ -1,4 +1,4 @@
-"""Style and helpers of the figures: the visual system of the thesis (tfm.mplstyle and paletas.py)."""
+"""Style and helpers of the figures: the visual system of the thesis (tfm.mplstyle and palettes.py)."""
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -6,7 +6,7 @@ import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
 
 from urban_accessibility_ml.config import FIGURES_DIR
-from urban_accessibility_ml.paletas import ACC, CMAP_SEC, SERIES  # noqa: F401 (used by the notebooks)
+from urban_accessibility_ml.plotting.palettes import ACC, CMAP_SEC, SERIES  # noqa: F401 (used by the notebooks)
 
 STYLE_FILE = Path(__file__).parent / "tfm.mplstyle"
 # Accessibility classes with the colours of the design system (blue = accessible, orange = not accessible)

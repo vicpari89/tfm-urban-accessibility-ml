@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from typer.testing import CliRunner
 
-from urban_accessibility_ml import dataset, pipeline, pipeline_common
+from urban_accessibility_ml.data import dataset, pipeline, pipeline_common
 
 
 def test_proposal_kind_and_street_type():

@@ -2,7 +2,7 @@
 
 Uso:
     import matplotlib.pyplot as plt
-    from paletas import ACC, SEG, CMAP_SEG, CMAP_SEC, superponer_mascara
+    from palettes import ACC, SEG, CMAP_SEG, CMAP_SEC, superponer_mascara
     plt.style.use("tfm.mplstyle")
 """
 import numpy as np
