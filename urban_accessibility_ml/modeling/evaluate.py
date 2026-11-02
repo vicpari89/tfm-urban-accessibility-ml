@@ -2,7 +2,7 @@
 
 Metrics chosen in the thesis (3.3.3), all insensitive to the majority class:
     - macro F1: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.f1_score.html, with param average: 'macro'
-    - balanced accuracy: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html
+    - balanced accuracy: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html
     - quadratic weighted kappa: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.cohen_kappa_score.html, with param weights: 'quadratic'
 """
 

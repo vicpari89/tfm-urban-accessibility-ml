@@ -2,7 +2,12 @@ import pandas as pd
 import pytest
 
 from urban_accessibility_ml.config import DIMENSIONS, FEATURE_SETS, PROFILES, TARGET_COLUMNS
-from urban_accessibility_ml.preprocessing.features import check_columns, dimensions_for, encode_class, get_xy
+from urban_accessibility_ml.preprocessing.features import (
+    check_columns,
+    dimensions_for,
+    encode_class,
+    get_xy,
+)
 
 EXPECTED_DIMENSIONS = {
     "cartografico_aereo": ["anchura", "pavimento", "cruces", "mobiliario"],
@@ -58,7 +63,9 @@ def test_dimensions_for_covers_every_feature_set():
 
 
 def test_dimensions_for_combinado_includes_the_other_two():
-    assert set(dimensions_for("cartografico_aereo")) | set(dimensions_for("calle")) == set(dimensions_for("combinado"))
+    assert set(dimensions_for("cartografico_aereo")) | set(dimensions_for("calle")) == set(
+        dimensions_for("combinado")
+    )
 
 
 def test_dimensions_for_unknown():
@@ -93,7 +100,9 @@ def test_encode_class_unknown_or_missing(bad):
 @pytest.mark.parametrize("profile", PROFILES)
 def test_get_xy_one_profile(df, feature_set, profile):
     X, y = get_xy(df, feature_set, profile)
-    assert list(X.columns) == [f"puntuacion_{d}_{profile}" for d in EXPECTED_DIMENSIONS[feature_set]]
+    assert list(X.columns) == [
+        f"puntuacion_{d}_{profile}" for d in EXPECTED_DIMENSIONS[feature_set]
+    ]
     assert y.tolist() == [2, 0, 1]
     assert X.index.equals(y.index) and X.index.equals(df.index)
 
@@ -141,3 +150,37 @@ def test_dimensions_for_threshold_is_inclusive(monkeypatch):
     monkeypatch.setattr("urban_accessibility_ml.preprocessing.features.THRESHOLD", 50)
     # cruces and senalizacion are exactly 50 in "calle": accepted; pendiente (40) is not
     assert dimensions_for("calle") == ["anchura", "cruces", "senalizacion", "mobiliario"]
+
+
+# --- feature sets with the REAL values of config.py (THRESHOLD, VIABILITY) -----------------------
+
+CONFIG_DIMENSIONS = {
+    "cartografico_aereo": ["cruces", "mobiliario"],
+    "calle": ["anchura", "cruces", "senalizacion", "mobiliario"],
+    "combinado": ["anchura", "cruces", "senalizacion", "mobiliario"],
+}
+
+
+class TestFeatureSetsWithConfigThreshold:
+
+    @pytest.fixture(autouse=True)
+    def threshold_40(self):
+        """Overrides the module fixture that pins the threshold: use the config value."""
+
+    def test_expected_sets_cover_all_but_completo(self):
+        assert set(CONFIG_DIMENSIONS) == set(FEATURE_SETS) - {"completo"}
+
+    @pytest.mark.parametrize("feature_set", CONFIG_DIMENSIONS)
+    def test_dimensions_for_each_set(self, feature_set):
+        assert dimensions_for(feature_set) == CONFIG_DIMENSIONS[feature_set]
+
+    def test_threshold_is_inclusive(self):
+        # cruces and senalizacion are exactly 50 in "calle" and must be accepted
+        assert {"cruces", "senalizacion"} <= set(dimensions_for("calle"))
+
+    def test_sets_are_nested(self):
+        assert set(dimensions_for("cartografico_aereo")) <= set(dimensions_for("calle"))
+        assert set(dimensions_for("calle")) <= set(dimensions_for("combinado"))
+
+    def test_combinado_equals_calle(self):
+        assert dimensions_for("combinado") == dimensions_for("calle")

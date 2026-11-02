@@ -58,7 +58,7 @@ def check_columns(df: pd.DataFrame, columns: list[str]) -> None:
         raise ValueError(f"Total scores cannot be used as inputs (target leakage): {leaks}")
 
 
-def get_xy(df: pd.DataFrame, feature_set: str, profile: str, include_all_profiles=False) -> tuple[pd.DataFrame, pd.Series]:
+def get_xy(df: pd.DataFrame, feature_set: str, profile: str, include_all_profiles: bool = False) -> tuple[pd.DataFrame, pd.Series]:
     """
     Inputs X and target y for a feature set and a profile.
     :param df: Dataframe.
