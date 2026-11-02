@@ -2,8 +2,8 @@ import pandas as pd
 import pytest
 
 from urban_accessibility_ml.config import PROCESSED_DATA_DIR
-from urban_accessibility_ml.pipeline_algeciras import section_number
-from urban_accessibility_ml.pipeline_common import base_name, class_by_thirds
+from urban_accessibility_ml.data.pipeline_algeciras import section_number
+from urban_accessibility_ml.data.pipeline_common import base_name, class_by_thirds
 
 UNIFIED_FILE = PROCESSED_DATA_DIR / "streets_unified.csv"
 CLASS_COLUMNS = {

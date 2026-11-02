@@ -14,7 +14,7 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 import zipfile
 
-from urban_accessibility_ml.pipeline import REQUIRED_FILES, ZENODO_RECORD_URL
+from urban_accessibility_ml.data.pipeline import REQUIRED_FILES, ZENODO_RECORD_URL
 
 RECORD_ID = ZENODO_RECORD_URL.rstrip("/").rsplit("/", 1)[-1]
 API = f"https://zenodo.org/api/records/{RECORD_ID}"
