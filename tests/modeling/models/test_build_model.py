@@ -45,3 +45,6 @@ class TestBuildModel:
         first = build_model(name, seed=OTHER_SEED).fit(X, y).predict(X)
         second = build_model(name, seed=OTHER_SEED).fit(X, y).predict(X)
         assert (first == second).all()
+
+    def test_builders_and_need_sample_weight_have_the_same_models(self):
+        assert list(BUILDERS) == list(NEED_SAMPLE_WEIGHT)
