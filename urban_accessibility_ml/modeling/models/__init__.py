@@ -5,13 +5,26 @@ from sklearn.base import BaseEstimator
 from urban_accessibility_ml.config import SEED
 from urban_accessibility_ml.modeling.models import (
     model_dummy,
+    model_lightgbm,
     model_logistic_regression,
+    model_random_forest,
+    model_xgboost_balanced,
+    model_xgboost_unbalanced,
 )
 
-BUILDERS = {
-    "dummy": model_dummy.build_model,
-    "logistic_regression": model_logistic_regression.build_model,
+MODEL_MODULES = {
+    "dummy": model_dummy,
+    "logistic_regression": model_logistic_regression,
+    "random_forest": model_random_forest,
+    "xgboost_balanced": model_xgboost_balanced,
+    "xgboost_unbalanced": model_xgboost_unbalanced,
+    "lightgbm": model_lightgbm,
 }
+
+BUILDERS = {name: module.build_model for name, module in MODEL_MODULES.items()}
+
+# Models that must be trained with balanced sample weights (see run_one in train.py)
+NEED_SAMPLE_WEIGHT = {name: module.NEED_SAMPLE_WEIGHT for name, module in MODEL_MODULES.items()}
 
 
 def build_model(name: str, seed: int = SEED) -> BaseEstimator:

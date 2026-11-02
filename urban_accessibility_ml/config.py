@@ -65,6 +65,12 @@ THRESHOLD = 50
 # Feature sets
 FEATURE_SETS = ["cartografico_aereo", "calle", "combinado", "completo"]
 
+# Cities
+CITIES = ["Albacete", "Algeciras"]
+
+# Models of the experiment matrix
+MATRIX_MODELS = ["dummy", "logistic_regression", "random_forest", "xgboost_balanced", "lightgbm"]
+
 # Metrics
 METRICS = ["f1_macro", "balanced_accuracy", "quadratic_weighted_kappa"]
 

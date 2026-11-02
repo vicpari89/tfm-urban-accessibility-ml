@@ -3,7 +3,6 @@ from sklearn.linear_model import LogisticRegression
 from urban_accessibility_ml.modeling.models import model_logistic_regression
 
 OTHER_SEED = 7
-MIN_ACCURACY = 0.7  # the dummy gets 0.5 on the fixture
 
 
 class TestLogisticRegression:
@@ -14,7 +13,7 @@ class TestLogisticRegression:
         assert model.max_iter == model_logistic_regression.MAX_ITER
         assert model.random_state == OTHER_SEED
 
-    def test_learns(self, xy):
+    def test_beats_the_dummy(self, xy, dummy_accuracy):
         X, y = xy
         pred = model_logistic_regression.build_model().fit(X, y).predict(X)
-        assert (pred == y).mean() > MIN_ACCURACY
+        assert (pred == y).mean() > dummy_accuracy

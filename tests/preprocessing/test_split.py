@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 from urban_accessibility_ml.preprocessing.split import (
-    BARRIO_COL, CITY_COL, CLASS_COL, ID_COL, N_SPLITS, STREET_COL, split_cross_city, split_mixed, split_within_city,
+    BARRIO_COL, CITY_COL, CLASS_COL, ID_COL, N_SPLITS, STREET_COL, build_all_splits, split_cross_city, split_mixed, split_within_city,
 )
 
 
@@ -152,3 +153,41 @@ class TestGroupByBarrio:
         key = self.df[CITY_COL] + "_" + self.df[BARRIO_COL].astype(str)
         for s in split_mixed(self.df, group_col=BARRIO_COL):
             assert not set(key[s.train_ids]) & set(key[s.test_ids])
+
+
+EXPECTED_SPLITS = (
+    [("within_city", "Albacete")] * 5
+    + [("within_city", "Algeciras")] * 5
+    + [("cross_city", "Albacete->Algeciras"), ("cross_city", "Algeciras->Albacete")]
+    + [("mixed", "both")] * 5
+)
+EXPECTED_COUNT_BY_STRATEGY = {"within_city": 10, "cross_city": 2, "mixed": 5}
+
+
+class TestBuildAllSplits:
+    def test_build_all_splits_count_and_order(self, city_df):
+        splits = build_all_splits(city_df)
+        assert len(splits) == 17
+        assert [(s.strategy, s.name) for s in splits] == EXPECTED_SPLITS
+
+
+    def test_build_all_splits_count_by_strategy(self, city_df):
+        strategies = pd.Series([s.strategy for s in build_all_splits(city_df)]).value_counts()
+        assert strategies.to_dict() == EXPECTED_COUNT_BY_STRATEGY
+
+
+    def test_build_all_splits_is_deterministic(self, city_df):
+        first, second = build_all_splits(city_df), build_all_splits(city_df)
+        for a, b in zip(first, second):
+            assert (a.strategy, a.name, a.fold) == (b.strategy, b.name, b.fold)
+            assert (a.train_ids == b.train_ids).all() and (a.test_ids == b.test_ids).all()
+
+
+    def test_build_all_splits_does_not_modify_df(self, city_df):
+        before = city_df.copy()
+        build_all_splits(city_df)
+        pd.testing.assert_frame_equal(city_df, before)
+
+
+    def test_build_all_splits_with_key_tramo_only_in_the_index(self, city_df):
+        assert len(build_all_splits(city_df.drop(columns="key_tramo"))) == 17

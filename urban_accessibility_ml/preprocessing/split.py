@@ -14,9 +14,12 @@ We use StratifiedGroupKFold because it combines StratifiedKFold and GroupKFold:
 """
 
 from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import StratifiedGroupKFold
+
+from urban_accessibility_ml.config import CITIES
 
 SEED = 42
 N_SPLITS = 5
@@ -83,3 +86,20 @@ def split_mixed(df: pd.DataFrame, group_col: str = STREET_COL):
         Split("mixed", "both", fold, ids[tr], ids[te])
         for fold, (tr, te) in enumerate(splitter.split(df, y, groups))
     ]
+
+
+def build_all_splits(df: pd.DataFrame) -> list[Split]:
+    """
+    All the train/test partitions of the experiments, always in the same order: within each city, city transfer and mixed.
+
+    :param df: unified dataset, indexed by key_tramo.
+    :return: the list of Split.
+    """
+    frame = df if ID_COL in df.columns else df.assign(**{ID_COL: df.index})
+    first, second = CITIES
+    return (
+        [s for city in CITIES for s in split_within_city(frame, city)]
+        + split_cross_city(frame, first, second)
+        + split_cross_city(frame, second, first)
+        + split_mixed(frame)
+    )
