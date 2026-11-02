@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from urban_accessibility_ml.config import DIMENSIONS, METRICS, PROFILES, TARGET_COLUMNS
+from urban_accessibility_ml.modeling import train
 from urban_accessibility_ml.modeling.train import run_one
 from urban_accessibility_ml.preprocessing.split import Split
 
@@ -64,3 +65,22 @@ def test_run_one_unknown_feature_set(df):
 def test_run_one_rows_collect_into_a_dataframe(df):
     rows = [run_one(df, SPLIT, FEATURE_SET, PROFILE, m) for m in ["dummy", "logistic_regression"]]
     assert pd.DataFrame(rows)["model"].tolist() == ["dummy", "logistic_regression"]
+
+
+def test_run_one_balances_the_classes_when_the_model_needs_it(df, monkeypatch):
+    calls = []
+    real = train.compute_sample_weight
+
+    def spy(class_weight, y):
+        calls.append(len(y))
+        return real(class_weight, y)
+
+    monkeypatch.setattr(train, "compute_sample_weight", spy)
+    run_one(df, SPLIT, FEATURE_SET, PROFILE, "xgboost_balanced")
+    assert calls == [len(TRAIN_IDS)]  # one weight per TRAIN row
+
+
+@pytest.mark.parametrize("model_name", ["dummy", "logistic_regression", "random_forest", "xgboost_unbalanced", "lightgbm"])
+def test_run_one_does_not_compute_weights_for_the_other_models(df, monkeypatch, model_name):
+    monkeypatch.setattr(train, "compute_sample_weight", lambda *a: pytest.fail("weights were computed"))
+    run_one(df, SPLIT, FEATURE_SET, PROFILE, model_name)

@@ -12,6 +12,7 @@ N_ESTIMATORS = 300
 CLASS_WEIGHT = "balanced"
 N_JOBS = -1
 VERBOSITY = -1  # silent
+NEED_SAMPLE_WEIGHT = False
 
 
 def build_model(seed: int = SEED) -> LGBMClassifier:

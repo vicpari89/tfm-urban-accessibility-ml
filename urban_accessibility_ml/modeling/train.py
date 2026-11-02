@@ -7,9 +7,11 @@ An experiment is a combination of:
 """
 
 import pandas as pd
+from sklearn.base import BaseEstimator
+from sklearn.utils.class_weight import compute_sample_weight
 
 from urban_accessibility_ml.modeling.evaluate import evaluate
-from urban_accessibility_ml.modeling.models import build_model
+from urban_accessibility_ml.modeling.models import NEED_SAMPLE_WEIGHT, build_model
 from urban_accessibility_ml.preprocessing.features import get_xy
 from urban_accessibility_ml.preprocessing.split import Split
 
@@ -41,8 +43,7 @@ def run_one(
     X_test, y_test = X.loc[split.test_ids], y.loc[split.test_ids]
 
     # 3. Train
-    model = build_model(model_name)
-    model.fit(X_train, y_train)
+    model = _train(model_name, X_train, y_train)
 
     # 4. Predict
     y_pred = model.predict(X_test)
@@ -62,3 +63,33 @@ def run_one(
         "n_test": len(X_test),
         **metrics,
     }
+
+
+def _train(model_name: str, X_train: pd.DataFrame, y_train: pd.Series) -> BaseEstimator:
+    """
+    Build the model and train it on the train rows.
+
+    :param model_name: one of the keys of modeling.models.BUILDERS.
+    :param X_train: inputs of the train rows.
+    :param y_train: encoded classes of the train rows.
+    :return: the trained model.
+    """
+    model = build_model(model_name)
+    model.fit(X_train, y_train, **_fit_params(model_name, y_train))
+    return model
+
+
+def _fit_params(model_name: str, y_train: pd.Series) -> dict:
+    """
+    Extra arguments for fit. Some models (XGBoost) have no class_weight: their classes are
+    balanced with one weight per train row (sample_weight).
+    https://scikit-learn.org/stable/modules/generated/sklearn.utils.class_weight.compute_sample_weight.html
+    https://xgboost.readthedocs.io/en/stable/python/python_api.html#module-xgboost.sklearn
+
+    :param model_name: one of the keys of modeling.models.NEED_SAMPLE_WEIGHT.
+    :param y_train: encoded classes of the train rows.
+    :return: {"sample_weight": weights} if the model needs it, an empty dict if not.
+    """
+    if NEED_SAMPLE_WEIGHT[model_name]:
+        return {"sample_weight": compute_sample_weight("balanced", y_train)}
+    return {}

@@ -1,4 +1,4 @@
-"""XGBoost: gradient boosted trees.
+"""XGBoost with balanced classes: gradient boosted trees, trained with balanced sample weights.
 
 Docs:
     - API: https://xgboost.readthedocs.io/en/stable/python/python_api.html#xgboost.XGBClassifier
@@ -12,6 +12,7 @@ from urban_accessibility_ml.config import SEED
 
 N_ESTIMATORS = 300
 N_JOBS = -1
+NEED_SAMPLE_WEIGHT = True
 
 
 def build_model(seed: int = SEED) -> XGBClassifier:

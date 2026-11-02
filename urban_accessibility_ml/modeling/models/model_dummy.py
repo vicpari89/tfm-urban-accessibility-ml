@@ -10,6 +10,8 @@ from sklearn.dummy import DummyClassifier
 from urban_accessibility_ml.config import SEED
 
 STRATEGY = "most_frequent"
+NEED_SAMPLE_WEIGHT = False
+
 
 def build_model(seed: int = SEED) -> DummyClassifier:
     """Return a classifier that ignores the inputs and always predicts the most frequent class.
