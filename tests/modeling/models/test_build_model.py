@@ -4,7 +4,7 @@ import pytest
 from urban_accessibility_ml.config import SEED
 from urban_accessibility_ml.modeling.models import BUILDERS, build_model
 
-MODEL_NAMES = ["dummy", "logistic_regression"]
+MODEL_NAMES = ["dummy", "logistic_regression", "random_forest", "xgboost", "lightgbm"]
 OTHER_SEED = 7
 UNKNOWN_MODEL = "does_not_exist"
 CLASSES = {0, 1, 2}  # C, B, A

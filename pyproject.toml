@@ -21,6 +21,7 @@ dependencies = [
     "geopandas>=1.1.4",
     "ipython",
     "jupyterlab",
+    "lightgbm",
     "loguru",
     "matplotlib",
     "mkdocs",
@@ -40,6 +41,7 @@ dependencies = [
     "seaborn>=0.13.2",
     "tqdm",
     "typer",
+    "xgboost",
 ]
 requires-python = "~=3.10.0"
 
