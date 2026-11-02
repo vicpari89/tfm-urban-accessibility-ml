@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from urban_accessibility_ml.config import DIMENSIONS, FEATURE_SETS, PROFILES, TARGET_COLUMNS
-from urban_accessibility_ml.modeling.features import check_columns, dimensions_for, encode_class, get_xy
+from urban_accessibility_ml.preprocessing.features import check_columns, dimensions_for, encode_class, get_xy
 
 EXPECTED_DIMENSIONS = {
     "cartografico_aereo": ["anchura", "pavimento", "cruces", "mobiliario"],
@@ -15,7 +15,7 @@ EXPECTED_DIMENSIONS = {
 @pytest.fixture(autouse=True)
 def threshold_40(monkeypatch):
     """EXPECTED_DIMENSIONS assumes a threshold of 40, whatever config.THRESHOLD says."""
-    monkeypatch.setattr("urban_accessibility_ml.modeling.features.THRESHOLD", 40)
+    monkeypatch.setattr("urban_accessibility_ml.preprocessing.features.THRESHOLD", 40)
 
 
 @pytest.fixture
@@ -138,6 +138,6 @@ def test_get_xy_unknown_class_in_target(df):
 
 
 def test_dimensions_for_threshold_is_inclusive(monkeypatch):
-    monkeypatch.setattr("urban_accessibility_ml.modeling.features.THRESHOLD", 50)
+    monkeypatch.setattr("urban_accessibility_ml.preprocessing.features.THRESHOLD", 50)
     # cruces and senalizacion are exactly 50 in "calle": accepted; pendiente (40) is not
     assert dimensions_for("calle") == ["anchura", "cruces", "senalizacion", "mobiliario"]

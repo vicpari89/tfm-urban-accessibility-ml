@@ -8,7 +8,7 @@ import pandas as pd
 from sklearn.base import BaseEstimator
 
 from urban_accessibility_ml.config import SEED
-from urban_accessibility_ml.modeling.split import Split
+from urban_accessibility_ml.preprocessing.split import Split
 
 
 def build_baseline_models(seed: int = SEED) -> dict[str, BaseEstimator]:

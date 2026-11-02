@@ -65,6 +65,9 @@ THRESHOLD = 50
 # Feature sets
 FEATURE_SETS = ["cartografico_aereo", "calle", "combinado", "completo"]
 
+# Metrics
+METRICS = ["f1_macro", "balanced_accuracy", "quadratic_weighted_kappa"]
+
 try:
     from tqdm import tqdm
 

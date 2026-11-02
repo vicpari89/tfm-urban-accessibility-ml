@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from urban_accessibility_ml.modeling.split import (
+from urban_accessibility_ml.preprocessing.split import (
     BARRIO_COL, CITY_COL, CLASS_COL, ID_COL, N_SPLITS, STREET_COL, split_cross_city, split_mixed, split_within_city,
 )
 
