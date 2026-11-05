@@ -33,9 +33,23 @@ jobs:
         env:
           ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
       - name: Build the dataset (data/interim and data/processed)
-        run: uv run python -m urban_accessibility_ml.data.dataset
+        run: |
+          for attempt in 1 2 3; do
+            if uv run python -m urban_accessibility_ml.data.dataset; then
+              exit 0
+            fi
+            [ "$attempt" -eq 3 ] && exit 1
+            sleep $((attempt * 30))
+          done
       - name: Run the notebooks and build the site
-        run: bash scripts/build_docs.sh
+        run: |
+          for attempt in 1 2 3; do
+            if bash scripts/build_docs.sh; then
+              exit 0
+            fi
+            [ "$attempt" -eq 3 ] && exit 1
+            sleep $((attempt * 30))
+          done
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/site
