@@ -33,7 +33,7 @@ jobs:
         env:
           ZENODO_TOKEN: ${{ secrets.ZENODO_TOKEN }}
       - name: Build the dataset (data/interim and data/processed)
-        run: uv run python -m urban_accessibility_ml.dataset
+        run: uv run python -m urban_accessibility_ml.data.dataset
       - name: Run the notebooks and build the site
         run: bash scripts/build_docs.sh
       - uses: actions/upload-pages-artifact@v3
