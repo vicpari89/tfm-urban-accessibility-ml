@@ -10,7 +10,8 @@ from urban_accessibility_ml.modeling.search_spaces_constants import (
     SEARCH_SPACES,
     TUNING_N_CANDIDATES,
 )
-from urban_accessibility_ml.modeling.tuning import _pick_best, tune_model
+from urban_accessibility_ml.modeling.tuning import _pick_best, tune_all, tune_model, tune_partition
+from urban_accessibility_ml.preprocessing.split import Split, build_all_splits
 
 N_ROWS_PER_CLASS = {0: 60, 1: 45, 2: 15}  # C, B, A: imbalanced like the real data
 N_FEATURES = 3
@@ -371,4 +372,131 @@ class TestXGBoostSearch:
         }
         # depth 2 beats 6; then fewer trees (200); then the biggest min_child_weight (8)
         assert _pick_best("xgboost_balanced", results) == 3
+
+
+class TestSplitKey:
+    def test_key_is_strategy_name_fold(self):
+        split = Split("cross_city", "Albacete->Algeciras", 0, np.array(["a"]), np.array(["b"]))
+        assert split.key == "cross_city/Albacete->Algeciras/0"
+
+
+@pytest.fixture
+def tiny_all(monkeypatch):
+    """The four models with tiny searches (2 candidates of a few small trees)."""
+    # every hyperparameter that COMPLEXITY reads (the tie rule) has to be in the space
+    spaces = {
+        "logistic_regression": {
+            "kind": "grid",
+            "space": [{"C": [0.1, 10], "penalty": ["l2"], "solver": ["lbfgs"]}],
+        },
+        "random_forest": {
+            "kind": "random",
+            "space": {"max_depth": [2, 3], "min_samples_leaf": [1, 5], "max_features": [0.5, 1.0]},
+        },
+        "xgboost_balanced": {
+            "kind": "random",
+            "space": {"max_depth": [2, 3], "n_estimators": [5, 10], "min_child_weight": [1, 5]},
+        },
+        "lightgbm": {
+            "kind": "random",
+            "space": {"num_leaves": [7, 15], "n_estimators": [5, 10], "min_child_samples": [5, 10]},
+        },
+    }
+    monkeypatch.setattr(tuning, "SEARCH_SPACES", spaces)
+    monkeypatch.setattr(tuning, "TUNING_N_CANDIDATES", 2)
+    original = tuning.build_model
+    monkeypatch.setattr(
+        tuning,
+        "build_model",
+        lambda name: original(name).set_params(**({"n_estimators": 5} if name == "random_forest" else {})),
+    )
+    return spaces
+
+
+class TestTunePartition:
+    def test_never_reads_the_test_rows(self, city_df, tiny_all, monkeypatch):
+        split = build_all_splits(city_df)[0]
+        seen = []
+        real = tuning.tune_model
+
+        def spy(model_name, X_train, y_train, groups_train):
+            seen.append(set(X_train.index))
+            return real(model_name, X_train, y_train, groups_train)
+
+        monkeypatch.setattr(tuning, "tune_model", spy)
+        tune_partition(city_df, split)
+        assert len(seen) == len(tiny_all)
+        assert all(ids == set(split.train_ids) for ids in seen)
+        assert not set(split.test_ids) & set().union(*seen)
+
+    def test_the_result_does_not_depend_on_the_test_rows(self, city_df, tiny_all):
+        split = build_all_splits(city_df)[0]
+        changed = city_df.copy()
+        test_rows = changed.index.isin(split.test_ids)
+        changed.loc[test_rows, "clase_total"] = "C"  # corrupt the test targets...
+        changed.loc[test_rows, "puntuacion_pendiente_global"] = 99.0  # ...and one test input
+        assert tune_partition(city_df, split)[0] == tune_partition(changed, split)[0]
+
+    def test_returns_params_and_candidates_of_every_model(self, city_df, tiny_all):
+        split = build_all_splits(city_df)[0]
+        best, candidates = tune_partition(city_df, split)
+        assert list(best) == list(tiny_all)
+        assert set(candidates["model"]) == set(tiny_all)
+        keys = ["strategy", "name", "fold"]
+        assert candidates[keys].drop_duplicates().to_dict("records") == [
+            {"strategy": split.strategy, "name": split.name, "fold": split.fold}
+        ]
+        assert candidates.groupby("model")["selected"].sum().eq(1).all()  # one selected per model
+
+
+class TestTuneAll:
+    @pytest.fixture
+    def splits(self, city_df):
+        all_splits = build_all_splits(city_df)
+        return [all_splits[0], all_splits[10]]  # within_city Albacete 0, and a cross_city one
+
+    def test_keys_are_the_split_keys(self, city_df, tiny_all, splits):
+        best, candidates = tune_all(city_df, splits)
+        assert list(best) == [s.key for s in splits]
+        assert any(k.startswith("cross_city/") and "->" in k for k in best)
+        assert set(candidates["name"]) == {s.name for s in splits}
+
+    def test_every_partition_has_the_params_of_every_model(self, city_df, tiny_all, splits):
+        best, _ = tune_all(city_df, splits)
+        assert all(list(models) == list(tiny_all) for models in best.values())
+
+    def test_calls_tune_partition_once_per_partition_with_its_split(
+        self, city_df, tiny_all, splits, monkeypatch
+    ):
+        calls = []
+        real = tuning.tune_partition
+
+        def spy(df, split):
+            calls.append(split.key)
+            return real(df, split)
+
+        monkeypatch.setattr(tuning, "tune_partition", spy)
+        tune_all(city_df, splits)
+        assert calls == [s.key for s in splits]
+
+    def test_accepts_key_tramo_as_a_column(self, city_df, tiny_all, splits):
+        best, _ = tune_all(city_df.reset_index(drop=True), splits)
+        assert list(best) == [s.key for s in splits]
+
+    def test_candidates_table_has_every_partition_and_model(self, city_df, tiny_all, splits):
+        _, candidates = tune_all(city_df, splits)
+        pairs = candidates[["strategy", "name", "fold", "model"]].drop_duplicates()
+        assert len(pairs) == len(splits) * len(tiny_all)
+
+    def test_is_reproducible(self, city_df, tiny_all, splits):
+        first = tune_all(city_df, splits)
+        second = tune_all(city_df, splits)
+        assert first[0] == second[0]
+        pd.testing.assert_frame_equal(first[1], second[1])
+
+    def test_does_not_modify_the_dataframe(self, city_df, tiny_all, splits):
+        plain = city_df.reset_index(drop=True)
+        before = plain.copy()
+        tune_all(plain, splits)
+        pd.testing.assert_frame_equal(plain, before)
 

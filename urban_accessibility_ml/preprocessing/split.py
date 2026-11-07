@@ -41,6 +41,11 @@ class Split:
     train_ids: np.ndarray
     test_ids: np.ndarray
 
+    @property
+    def key(self) -> str:
+        """Identifier of the partition: strategy/name/fold."""
+        return f"{self.strategy}/{self.name}/{self.fold}"
+
 def split_within_city(df: pd.DataFrame, city: str, group_col: str = STREET_COL):
     # 1. Filter rows of the city
     city_df = df[df[CITY_COL] == city]
