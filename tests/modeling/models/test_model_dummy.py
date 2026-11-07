@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from sklearn.dummy import DummyClassifier
 
 from urban_accessibility_ml.modeling.models import model_dummy
@@ -17,3 +18,7 @@ class TestDummy:
         X, y = xy
         pred = model_dummy.build_model().fit(X, y).predict(X)
         assert (pred == np.bincount(y).argmax()).all()
+
+    def test_has_no_tunable_params(self):
+        with pytest.raises(TypeError):
+            model_dummy.build_model(strategy="prior")

@@ -22,3 +22,5 @@ nav:
       - "0.05 Comparación Algeciras-Albacete": notebooks/0.05-comparison-algeciras-albacete.ipynb
       - "0.06 Análisis de correlaciones": notebooks/0.06-correlation-analysis.ipynb
       - "0.07 Análisis de la partición": notebooks/0.07-split-analysis.ipynb
+      - "0.11 Ajuste de hiperparámetros": notebooks/0.11-hyperparameter-tuning.ipynb
+      - "0.12 Matriz con hiperparámetros ajustados": notebooks/0.12-tuned-experiment-matrix.ipynb

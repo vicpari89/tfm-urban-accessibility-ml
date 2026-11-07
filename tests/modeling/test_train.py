@@ -4,6 +4,7 @@ import pytest
 
 from urban_accessibility_ml.config import DIMENSIONS, METRICS, PROFILES, TARGET_COLUMNS
 from urban_accessibility_ml.modeling import train
+from urban_accessibility_ml.modeling.models import model_xgboost_balanced
 from urban_accessibility_ml.modeling.train import run_one
 from urban_accessibility_ml.preprocessing.split import Split
 
@@ -67,20 +68,89 @@ def test_run_one_rows_collect_into_a_dataframe(df):
     assert pd.DataFrame(rows)["model"].tolist() == ["dummy", "logistic_regression"]
 
 
-def test_run_one_balances_the_classes_when_the_model_needs_it(df, monkeypatch):
+def test_run_one_trains_xgboost_balanced_with_weights_of_the_train_rows(df, monkeypatch):
     calls = []
-    real = train.compute_sample_weight
+    real = model_xgboost_balanced.compute_sample_weight
 
     def spy(class_weight, y):
         calls.append(len(y))
         return real(class_weight, y)
 
-    monkeypatch.setattr(train, "compute_sample_weight", spy)
+    monkeypatch.setattr(model_xgboost_balanced, "compute_sample_weight", spy)
     run_one(df, SPLIT, FEATURE_SET, PROFILE, "xgboost_balanced")
     assert calls == [len(TRAIN_IDS)]  # one weight per TRAIN row
 
 
 @pytest.mark.parametrize("model_name", ["dummy", "logistic_regression", "random_forest", "xgboost_unbalanced", "lightgbm"])
 def test_run_one_does_not_compute_weights_for_the_other_models(df, monkeypatch, model_name):
-    monkeypatch.setattr(train, "compute_sample_weight", lambda *a: pytest.fail("weights were computed"))
+    monkeypatch.setattr(
+        model_xgboost_balanced, "compute_sample_weight", lambda *a: pytest.fail("weights were computed")
+    )
     run_one(df, SPLIT, FEATURE_SET, PROFILE, model_name)
+
+
+OTHER_SPLIT_KEY = "within_city/Algeciras/0"
+
+
+def spy_on_build_model(monkeypatch):
+    """Record the params that run_one gives to build_model."""
+    received = []
+    real = train.build_model
+
+    def spy(name, seed=None, params=None):
+        received.append(params)
+        return real(name, params=params)
+
+    monkeypatch.setattr(train, "build_model", spy)
+    return received
+
+
+def test_run_one_without_hyperparameters_builds_the_default_model(df, monkeypatch):
+    received = spy_on_build_model(monkeypatch)
+    run_one(df, SPLIT, FEATURE_SET, PROFILE, "logistic_regression")
+    assert received == [None]
+
+
+def test_run_one_uses_the_params_of_its_partition_and_model(df, monkeypatch):
+    received = spy_on_build_model(monkeypatch)
+    hyperparameters = {
+        SPLIT.key: {"logistic_regression": {"C": 0.1}, "random_forest": {"max_depth": 3}},
+        OTHER_SPLIT_KEY: {"logistic_regression": {"C": 99}},
+    }
+    run_one(df, SPLIT, FEATURE_SET, PROFILE, "logistic_regression", hyperparameters)
+    assert received == [{"C": 0.1}]  # not the 99 of the other partition, not the forest ones
+
+
+def test_run_one_model_without_params_uses_the_defaults(df, monkeypatch):
+    received = spy_on_build_model(monkeypatch)
+    hyperparameters = {SPLIT.key: {"logistic_regression": {"C": 0.1}}}
+    run_one(df, SPLIT, FEATURE_SET, PROFILE, "dummy", hyperparameters)  # the dummy is not tuned
+    assert received == [None]
+
+
+def test_run_one_partition_missing_from_hyperparameters_fails(df):
+    hyperparameters = {OTHER_SPLIT_KEY: {"logistic_regression": {"C": 0.1}}}
+    with pytest.raises(KeyError, match="within_city/Albacete/2"):
+        run_one(df, SPLIT, FEATURE_SET, PROFILE, "logistic_regression", hyperparameters)
+
+
+def test_run_one_params_the_model_does_not_accept_fail(df):
+    hyperparameters = {SPLIT.key: {"logistic_regression": {"max_depth": 3}}}
+    with pytest.raises(TypeError):
+        run_one(df, SPLIT, FEATURE_SET, PROFILE, "logistic_regression", hyperparameters)
+
+
+@pytest.mark.parametrize(
+    "model_name, params",
+    [
+        ("logistic_regression", {"C": 0.1, "penalty": "l1", "solver": "saga"}),
+        ("random_forest", {"max_depth": 3, "min_samples_leaf": 2, "max_features": 0.5}),
+        ("xgboost_balanced", {"max_depth": 2, "n_estimators": 5}),
+        ("lightgbm", {"num_leaves": 7, "n_estimators": 5, "min_child_samples": 5}),
+    ],
+)
+def test_run_one_trains_every_tuned_model_with_its_params(df, model_name, params):
+    row = run_one(df, SPLIT, FEATURE_SET, PROFILE, model_name, {SPLIT.key: {model_name: params}})
+    assert row["model"] == model_name
+    assert 0 <= row["f1_macro"] <= 1
+

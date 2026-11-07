@@ -41,6 +41,12 @@ class Split:
     train_ids: np.ndarray
     test_ids: np.ndarray
 
+    @property
+    def key(self) -> str:
+        """Identifier of the partition: strategy/name/fold."""
+        return f"{self.strategy}/{self.name}/{self.fold}"
+
+
 def split_within_city(df: pd.DataFrame, city: str, group_col: str = STREET_COL):
     # 1. Filter rows of the city
     city_df = df[df[CITY_COL] == city]
@@ -56,9 +62,16 @@ def split_within_city(df: pd.DataFrame, city: str, group_col: str = STREET_COL):
 
     # 5. Build one Split per fold
     return [
-        Split("within_city", city, fold, city_df[ID_COL].to_numpy()[tr], city_df[ID_COL].to_numpy()[te])
+        Split(
+            "within_city",
+            city,
+            fold,
+            city_df[ID_COL].to_numpy()[tr],
+            city_df[ID_COL].to_numpy()[te],
+        )
         for fold, (tr, te) in enumerate(splitter.split(city_df, y, groups))
     ]
+
 
 def split_cross_city(df: pd.DataFrame, train_city: str, test_city: str):
     # 1. Filter by train_city for the train_df
@@ -68,7 +81,16 @@ def split_cross_city(df: pd.DataFrame, train_city: str, test_city: str):
     test_df = df[df[CITY_COL] == test_city]
 
     # 3. Single split (no folds): all of train_city -> all of test_city
-    return [Split("cross_city", f"{train_city}->{test_city}", 0, train_df[ID_COL].to_numpy(), test_df[ID_COL].to_numpy())]
+    return [
+        Split(
+            "cross_city",
+            f"{train_city}->{test_city}",
+            0,
+            train_df[ID_COL].to_numpy(),
+            test_df[ID_COL].to_numpy(),
+        )
+    ]
+
 
 def split_mixed(df: pd.DataFrame, group_col: str = STREET_COL):
     # 1.Crete a group formed by CITY_COL and STREET_COL

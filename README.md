@@ -34,12 +34,12 @@ This repository structure was generated using [Cookiecutter Data Science v2 (CCD
 The raw data (ACCESIA, Albacete and Algeciras) is not in the repository: download it from [Zenodo](https://zenodo.org/records/23168998) and place it in `data/raw/albacete/` and `data/raw/algeciras/`.
 
 ```
-data/raw ──(make data: dataset.py)──> data/interim ──(pipeline.py)──> data/processed
+data/raw ──(make data: data/dataset.py)──> data/interim ──(data/pipeline.py)──> data/processed
 ```
 
 | Command | What it does |
 |---|---|
-| `make data` | Checks the raw files, cleans, unifies and validates them (`DatasetPipeline` in `urban_accessibility_ml/pipeline.py`, launched by `urban_accessibility_ml/dataset.py`). |
+| `make data` | Checks the raw files, cleans, unifies and validates them (`DatasetPipeline` in `urban_accessibility_ml/data/pipeline.py`, launched by `urban_accessibility_ml/data/dataset.py`). |
 | `make unified` | Same result, running the notebooks `0.01` to `0.06` in order (they run on temporary copies, so the notebooks in the repository are not modified). |
 | `make test` | Unit tests, and quality checks of `data/processed/streets_unified.csv`. |
 
@@ -51,13 +51,33 @@ Both routes give identical files. They write:
 
 The pipeline also writes the streets with geometry to `data/interim/<city>/<city>_streets_geo.geojson` (Algeciras needs the cached OSM file `data/external/algeciras/osm_streets_by_name.gpkg`, or internet to download it). The maps of notebooks `0.03` and `0.04` are not part of the pipeline. Run the commands with `uv run make ...` if the virtual environment is not activated.
 
+## Models, hyperparameter tuning and experiments
+
+The models, the tuning and the experiment matrix are in `urban_accessibility_ml/modeling/`, and the 17 train/test partitions (grouped by street) in `urban_accessibility_ml/preprocessing/split.py`. They need `data/processed/streets_unified.csv` (see above).
+
+| Command | What it does |
+|---|---|
+| `make tune` | Tunes the hyperparameters of logistic regression, random forest, XGBoost and LightGBM in each of the 17 partitions, using only their training rows (about 45 minutes). Writes `reports/results/best_params.json` and `reports/results/tuning-candidates.csv`. |
+| `make experiments` | Runs the experiment matrix (5 models × 4 feature sets × 4 profiles × 17 partitions) twice, with the default and with the tuned hyperparameters (about 8 minutes). Writes `reports/results/experiment-matrix-default.csv` and `reports/results/experiment-matrix-tuned.csv`. |
+
+Both commands stop before running if their result files already exist. To write over them, run the module with `--overwrite`, for example `uv run python -m urban_accessibility_ml.modeling.experiments_run --overwrite`. The results are committed, so the notebooks below can read them without running anything long.
+
+| Notebook | Content |
+|---|---|
+| `0.07` | The train/test partitions. |
+| `0.08` | Baseline models. |
+| `0.09` | Random forest, XGBoost and LightGBM. |
+| `0.10` | Experiment matrix with the default hyperparameters. |
+| `0.11` | Hyperparameter tuning: search spaces, procedure and chosen values. It reads the results of `make tune`. |
+| `0.12` | Default against tuned hyperparameters in the test set. It reads the results of `make experiments`. |
+
 ## Documentation
 
 The notebooks are published as a web page (mkdocs-material + mkdocs-jupyter, config in `docs/mkdocs.yml`).
 
 | Command | What it does |
 |---|---|
-| `make docs` | Runs the notebooks on temporary copies and builds the site in `docs/site/` (ignored by git). It needs `data/processed/streets_unified.csv` (`python -m urban_accessibility_ml.dataset`, see above), and internet for notebook `0.03`. The notebooks in `notebooks/` are not modified. |
+| `make docs` | Runs the notebooks on temporary copies and builds the site in `docs/site/` (ignored by git). It needs `data/processed/streets_unified.csv` (`python -m urban_accessibility_ml.data.dataset`, see above), and internet for notebook `0.03`. The notebooks in `notebooks/` are not modified. |
 | `EXECUTE=0 make docs` | Same, without running the notebooks (uses the outputs they already have). |
 
 It is published automatically in GitHub Pages by `.github/workflows/docs.yml` when a tag is pushed (`git tag v0.1 && git push origin v0.1`), or by hand in the Actions tab. The workflow downloads the raw data from Zenodo (`scripts/download_raw.py`), builds the dataset, runs the notebooks and builds the site. **The executed notebooks are not saved in the repository**: the notebooks are committed without outputs (`nbstripout`).
@@ -86,9 +106,8 @@ To preview it in local: `make docs` (runs the notebooks on temporary copies; nee
 │
 ├── models             <- Trained and serialized models, model predictions, or model summaries
 │
-├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-│                         the creator's initials, and a short `-` delimited description, e.g.
-│                         `1.0-jqp-initial-data-exploration`.
+├── notebooks          <- Jupyter notebooks, numbered in order (`0.01` to `0.12`) with a short
+│                         `-` delimited description, e.g. `0.11-hyperparameter-tuning`.
 │
 ├── pyproject.toml     <- Project configuration file with package metadata for 
 │                         urban_accessibility_ml and configuration for tools like ruff
@@ -96,7 +115,14 @@ To preview it in local: `make docs` (runs the notebooks on temporary copies; nee
 ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
 │
 ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-│   └── figures        <- Generated graphics and figures to be used in reporting
+│   ├── figures        <- Generated graphics and figures to be used in reporting
+│   └── results        <- Results of the models: tuning (`best_params.json`, `tuning-candidates.csv`),
+│                         the matrices of `make experiments` (`experiment-matrix-*.csv`) and the CSV
+│                         that notebooks 0.08 to 0.10 write
+│
+├── scripts            <- `build_docs.sh` (builds the documentation) and `download_raw.py` (raw data from Zenodo)
+│
+├── tests              <- Unit tests, with one folder per package: `data`, `preprocessing` and `modeling`
 │
 ├── uv.lock            <- Locked dependency versions for reproducible environments
 │
@@ -106,19 +132,30 @@ To preview it in local: `make docs` (runs the notebooks on temporary copies; nee
     │
     ├── config.py               <- Store useful variables and configuration
     │
-    ├── dataset.py              <- Orchestrator: runs `DatasetPipeline`, or notebooks 0.01-0.06 with `--notebooks`
+    ├── data                    <- Raw data -> `data/processed/streets_unified.csv`
+    │   ├── dataset.py              <- Orchestrator: runs `DatasetPipeline`, or notebooks 0.01-0.06 with `--notebooks`
+    │   ├── pipeline.py             <- `DatasetPipeline`: checks, cleans and unifies the data
+    │   ├── pipeline_algeciras.py   <- Algeciras-specific cleaning, geometry (KML + OSM) and unification
+    │   ├── pipeline_albacete.py    <- Albacete-specific cleaning, geometry and unification
+    │   └── pipeline_common.py      <- Helpers shared by both cities
     │
-    ├── pipeline.py             <- `DatasetPipeline`: checks, cleans and unifies the data into `data/processed/`
-    ├── pipeline_algeciras.py   <- Algeciras-specific cleaning, geometry (KML + OSM) and unification
-    ├── pipeline_albacete.py    <- Albacete-specific cleaning, geometry and unification
-    ├── pipeline_common.py      <- Helpers shared by both cities
+    ├── preprocessing           <- From the unified data to the model inputs
+    │   ├── features.py             <- Feature sets and profiles (`get_xy`)
+    │   └── split.py                <- The 17 train/test partitions, grouped by street (`build_all_splits`)
     │
-    ├── modeling                
-    │   ├── __init__.py 
-    │   ├── predict.py          <- Code to run model inference with trained models          
-    │   └── train.py            <- Code to train models
+    ├── modeling                <- Models, experiments and tuning
+    │   ├── models                  <- One builder per model (`model_*.py`) and `build_model`
+    │   ├── train.py                <- `run_one`: train and evaluate one model in one partition
+    │   ├── evaluate.py             <- Metrics (F1 macro, balanced accuracy, weighted kappa)
+    │   ├── experiments.py          <- `run_experiments`: the whole matrix, and `save_results`
+    │   ├── experiments_run.py      <- `make experiments`: the matrix with default and tuned hyperparameters
+    │   ├── predict.py              <- Code to run model inference with trained models
+    │   └── tuning                  <- Hyperparameter tuning, launched with `make tune` (`tuning_run.py`)
     │
-    └── plots.py                <- Code to create visualizations
+    └── plotting                <- Visual system of the thesis
+        ├── palettes.py             <- Colour palettes
+        ├── plots.py                <- Code to create visualizations (`use_style`, `save_figure`)
+        └── tfm.mplstyle            <- matplotlib style
 ```
 
 --------
@@ -142,7 +179,7 @@ The raw datasets for Albacete (`.sql` scripts) and Algeciras (`.xlsx` files) are
    * Algeciras Excel files (`260518_Tabla_resultados_Edificios_Algeciras.xlsx`, `260522_Tabla_resultados_Viario_Algeciras.xlsx`) -> `data/raw/algeciras/`
 4. Verify that all files are in place:
    ```bash
-   uv run python -m urban_accessibility_ml.dataset
+   uv run python -m urban_accessibility_ml.data.dataset
    ```
 
 --------

@@ -23,12 +23,14 @@ MODEL_MODULES = {
 
 BUILDERS = {name: module.build_model for name, module in MODEL_MODULES.items()}
 
-# Models that must be trained with balanced sample weights (see run_one in train.py)
-NEED_SAMPLE_WEIGHT = {name: module.NEED_SAMPLE_WEIGHT for name, module in MODEL_MODULES.items()}
 
+def build_model(name: str, seed: int = SEED, params: dict | None = None) -> BaseEstimator:
+    """
+    Untrained model by name (a key of BUILDERS).
 
-def build_model(name: str, seed: int = SEED) -> BaseEstimator:
-    """Untrained model by name (a key of BUILDERS)."""
+    :param params: hyperparameters, passed by name to the builder of the model. A name the
+        builder does not accept (or any, for dummy and xgboost_unbalanced) raises TypeError.
+    """
     if name not in BUILDERS:
         raise ValueError(f"Unknown model: {name}. Options: {list(BUILDERS)}")
-    return BUILDERS[name](seed)
+    return BUILDERS[name](seed, **(params or {}))

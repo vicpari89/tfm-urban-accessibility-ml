@@ -1,3 +1,4 @@
+import pytest
 from xgboost import XGBClassifier
 
 from urban_accessibility_ml.modeling.models import model_xgboost_balanced, model_xgboost_unbalanced
@@ -11,10 +12,21 @@ class TestXGBoostUnbalanced:
         assert isinstance(model, XGBClassifier)
         assert model.get_params() == model_xgboost_balanced.build_model(OTHER_SEED).get_params()
 
-    def test_does_not_need_sample_weight(self):
-        assert model_xgboost_unbalanced.NEED_SAMPLE_WEIGHT is False
-
     def test_beats_the_dummy(self, xy, dummy_accuracy):
         X, y = xy
         pred = model_xgboost_unbalanced.build_model().fit(X, y).predict(X)
         assert (pred == y).mean() > dummy_accuracy
+
+    def test_is_a_plain_xgboost_classifier(self):
+        assert type(model_xgboost_unbalanced.build_model()) is XGBClassifier
+
+    def test_does_not_compute_weights(self, xy, monkeypatch):
+        X, y = xy
+        monkeypatch.setattr(
+            model_xgboost_balanced, "compute_sample_weight", lambda *a: pytest.fail("computed")
+        )
+        model_xgboost_unbalanced.build_model().fit(X, y)
+
+    def test_has_no_tunable_params(self):
+        with pytest.raises(TypeError):
+            model_xgboost_unbalanced.build_model(max_depth=2)

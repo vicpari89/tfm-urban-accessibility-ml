@@ -12,7 +12,10 @@ from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score, f1_score
 
 from urban_accessibility_ml.config import CLASS_ORDER, METRICS
 
-KAPPA_LABELS = list(range(len(CLASS_ORDER))) # Used in case one fold does not have class A (or any other class).
+KAPPA_LABELS = list(
+    range(len(CLASS_ORDER))
+)  # Used in case one fold does not have class A (or any other class).
+
 
 def macro_f1(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """F1 averaged over classes with the same weight each."""

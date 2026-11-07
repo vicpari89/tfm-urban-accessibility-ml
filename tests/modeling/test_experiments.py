@@ -75,3 +75,29 @@ def test_save_results_creates_folders_and_round_trips(city_df, tmp_path):
     read = pd.read_csv(path)
     assert "Unnamed: 0" not in read.columns
     pd.testing.assert_frame_equal(read, results)
+
+
+def test_run_experiments_passes_hyperparameters_to_every_run(city_df, monkeypatch):
+    received = []
+    monkeypatch.setattr(experiments, "run_one", lambda *a: received.append(a[5]) or {"model": a[4]})
+    hyperparameters = {"some/partition/0": {"logistic_regression": {"C": 0.1}}}
+    splits = build_all_splits(city_df)[:2]
+    run_experiments(city_df, splits, [FEATURE_SET], [PROFILE], ["dummy"], hyperparameters)
+    assert received == [hyperparameters, hyperparameters]
+
+
+def test_run_experiments_without_hyperparameters_gives_none_to_run_one(city_df, monkeypatch):
+    received = []
+    monkeypatch.setattr(experiments, "run_one", lambda *a: received.append(a[5]) or {"model": a[4]})
+    run_experiments(city_df, build_all_splits(city_df)[:1], [FEATURE_SET], [PROFILE], ["dummy"])
+    assert received == [None]
+
+
+def test_run_experiments_with_tuned_params_end_to_end(city_df):
+    splits = build_all_splits(city_df)[:2]
+    hyperparameters = {s.key: {"logistic_regression": {"C": 0.1}} for s in splits}
+    results = run_experiments(
+        city_df, splits, [FEATURE_SET], [PROFILE], ["dummy", "logistic_regression"], hyperparameters
+    )
+    assert len(results) == len(splits) * 2
+

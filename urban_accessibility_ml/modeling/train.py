@@ -11,10 +11,9 @@ combination) -> experiments.save_results
 
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sklearn.utils.class_weight import compute_sample_weight
 
 from urban_accessibility_ml.modeling.evaluate import evaluate
-from urban_accessibility_ml.modeling.models import NEED_SAMPLE_WEIGHT, build_model
+from urban_accessibility_ml.modeling.models import build_model
 from urban_accessibility_ml.preprocessing.features import get_xy
 from urban_accessibility_ml.preprocessing.split import Split
 
@@ -25,6 +24,7 @@ def run_one(
     feature_set: str,
     profile: str,
     model_name: str,
+    hyperparameters: dict | None = None,
 ) -> dict:
     """
     Train and evaluate one experiment on one split.
@@ -34,6 +34,8 @@ def run_one(
     :param feature_set: which dimensions set use: one of config.FEATURE_SETS.
     :param profile: which profile: one of config.PROFILES.
     :param model_name: model to train: one of the keys of modeling.models.BUILDERS.
+    :param hyperparameters: {Split.key: {model: params}}, for example the result of the tuning
+        (modeling/tuning). The ones of this split and model are used. None: the model defaults.
     :return: one result row, a dict with the experiment (strategy, name, fold, feature_set,
         profile, model), the size of each set (n_train, n_test) and one value per metric of
         config.METRICS.
@@ -46,7 +48,7 @@ def run_one(
     X_test, y_test = X.loc[split.test_ids], y.loc[split.test_ids]
 
     # 3. Train
-    model = _train(model_name, X_train, y_train)
+    model = _train(model_name, X_train, y_train, _params_for(hyperparameters, split, model_name))
 
     # 4. Predict
     y_pred = model.predict(X_test)
@@ -68,31 +70,32 @@ def run_one(
     }
 
 
-def _train(model_name: str, X_train: pd.DataFrame, y_train: pd.Series) -> BaseEstimator:
+def _params_for(hyperparameters: dict | None, split: Split, model_name: str) -> dict | None:
+    """
+    The hyperparameters of a model in a split.
+
+    :return: None if there are no hyperparameters, or if the model was not tuned (dummy).
+    :raises KeyError: if hyperparameters has no entry for the split.
+    """
+    if hyperparameters is None:
+        return None
+    if split.key not in hyperparameters:
+        raise KeyError(f"No hyperparameters for the partition {split.key}")
+    return hyperparameters[split.key].get(model_name)
+
+
+def _train(
+    model_name: str, X_train: pd.DataFrame, y_train: pd.Series, params: dict | None = None
+) -> BaseEstimator:
     """
     Build the model and train it on the train rows.
 
     :param model_name: one of the keys of modeling.models.BUILDERS.
     :param X_train: inputs of the train rows.
     :param y_train: encoded classes of the train rows.
+    :param params: hyperparameters of the model. None: the default ones.
     :return: the trained model.
     """
-    model = build_model(model_name)
-    model.fit(X_train, y_train, **_fit_params(model_name, y_train))
+    model = build_model(model_name, params=params)
+    model.fit(X_train, y_train)
     return model
-
-
-def _fit_params(model_name: str, y_train: pd.Series) -> dict:
-    """
-    Extra arguments for fit. Some models (XGBoost) have no class_weight: their classes are
-    balanced with one weight per train row (sample_weight).
-    https://scikit-learn.org/stable/modules/generated/sklearn.utils.class_weight.compute_sample_weight.html
-    https://xgboost.readthedocs.io/en/stable/python/python_api.html#module-xgboost.sklearn
-
-    :param model_name: one of the keys of modeling.models.NEED_SAMPLE_WEIGHT.
-    :param y_train: encoded classes of the train rows.
-    :return: {"sample_weight": weights} if the model needs it, an empty dict if not.
-    """
-    if NEED_SAMPLE_WEIGHT[model_name]:
-        return {"sample_weight": compute_sample_weight("balanced", y_train)}
-    return {}
