@@ -15,12 +15,25 @@ N_JOBS = -1
 NEED_SAMPLE_WEIGHT = False
 
 
-def build_model(seed: int = SEED) -> RandomForestClassifier:
-    """Return a random forest with class weights (untuned hyperparameters).
+def build_model(
+    seed: int = SEED,
+    *,
+    max_depth: int | None = None,
+    min_samples_leaf: int = 1,
+    max_features: str | float = "sqrt",
+) -> RandomForestClassifier:
+    """Return a random forest with class weights. The defaults are the sklearn ones.
 
-    Input:  seed (int)
+    Input:  seed, max_depth (depth of each tree), min_samples_leaf (tramos per leaf),
+        max_features (variables per split).
     Output: an UNTRAINED RandomForestClassifier
     """
     return RandomForestClassifier(
-        n_estimators=N_ESTIMATORS, class_weight=CLASS_WEIGHT, random_state=seed, n_jobs=N_JOBS
+        n_estimators=N_ESTIMATORS,
+        max_depth=max_depth,
+        min_samples_leaf=min_samples_leaf,
+        max_features=max_features,
+        class_weight=CLASS_WEIGHT,
+        random_state=seed,
+        n_jobs=N_JOBS,
     )

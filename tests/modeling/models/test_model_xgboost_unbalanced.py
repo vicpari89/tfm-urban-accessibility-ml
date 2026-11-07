@@ -1,3 +1,4 @@
+import pytest
 from xgboost import XGBClassifier
 
 from urban_accessibility_ml.modeling.models import model_xgboost_balanced, model_xgboost_unbalanced
@@ -18,3 +19,7 @@ class TestXGBoostUnbalanced:
         X, y = xy
         pred = model_xgboost_unbalanced.build_model().fit(X, y).predict(X)
         assert (pred == y).mean() > dummy_accuracy
+
+    def test_has_no_tunable_params(self):
+        with pytest.raises(TypeError):
+            model_xgboost_unbalanced.build_model(max_depth=2)
