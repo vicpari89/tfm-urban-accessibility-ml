@@ -52,7 +52,7 @@ class TestBuildModel:
 
 class TestBuildModelParams:
     PARAMS = {
-        "logistic_regression": {"C": 0.1, "penalty": "l1"},
+        "logistic_regression": {"C": 0.1, "penalty": "l1", "solver": "saga"},
         "random_forest": {"max_depth": 3, "min_samples_leaf": 5, "max_features": 0.5},
         "xgboost_balanced": {"max_depth": 2, "learning_rate": 0.05, "min_child_weight": 3},
         "lightgbm": {"num_leaves": 7, "min_child_samples": 8, "subsample": 0.8},
@@ -79,15 +79,16 @@ class TestBuildModelParams:
         with pytest.raises(TypeError):
             build_model(name, params={"max_depth": 2})
 
-    @pytest.mark.parametrize("penalty", ["l1", "l2"])
-    def test_logistic_regression_fits_with_every_penalty(self, penalty, xy):
+    @pytest.mark.parametrize("penalty, solver", [("l1", "saga"), ("l2", "lbfgs")])
+    def test_logistic_regression_fits_with_every_penalty(self, penalty, solver, xy):
         X, y = xy
-        pred = build_model("logistic_regression", params={"penalty": penalty}).fit(X, y).predict(X)
+        params = {"penalty": penalty, "solver": solver}
+        pred = build_model("logistic_regression", params=params).fit(X, y).predict(X)
         assert set(np.unique(pred)) <= CLASSES
 
-    def test_logistic_regression_unknown_penalty_fails(self):
-        with pytest.raises(KeyError):
-            build_model("logistic_regression", params={"penalty": "elasticnet"})
+    def test_logistic_regression_l1_needs_the_saga_solver(self):
+        with pytest.raises(ValueError, match="saga"):
+            build_model("logistic_regression", params={"penalty": "l1"})
 
     def test_lightgbm_subsample_freq_is_set(self):
         assert build_model("lightgbm").get_params()["subsample_freq"] == 1
