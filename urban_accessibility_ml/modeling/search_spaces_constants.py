@@ -6,6 +6,7 @@ Every key of a "space" must be a keyword argument of the build_model of that mod
 
 TUNING_METRIC = "f1_macro"  # one of config.METRICS
 TUNING_INNER_SPLITS = 3  # inner folds (StratifiedGroupKFold) inside the train rows of a partition
+TUNING_N_CANDIDATES = 30  # candidates of a "random" search; a "grid" tries all of them
 TUNING_TIE_TOLERANCE = 0.005  # candidates this close to the best are a tie: the simplest wins
 TUNING_FEATURE_SET = "completo"  # reference feature set and profile of the tuning
 TUNING_PROFILE = "global"
@@ -21,5 +22,14 @@ SEARCH_SPACES = {
             {"C": C_VALUES, "penalty": ["l2"], "solver": ["lbfgs"]},
             {"C": C_VALUES, "penalty": ["l1"], "solver": ["saga"]},
         ],
+    },
+    # 5 x 4 x 3 = 60 combinations: the random search tries 30 of them. n_estimators is fixed
+    "random_forest": {
+        "kind": "random",
+        "space": {
+            "max_depth": [None, 3, 5, 8, 12],
+            "min_samples_leaf": [1, 2, 5, 10],
+            "max_features": ["sqrt", 0.5, 1.0],
+        },
     },
 }

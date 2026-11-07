@@ -4,7 +4,7 @@ To choose the values, the train rows are split again into 3 groups (StratifiedGr
 always stays in the same group, and each group keeps a similar share of every class. All the
 candidates of a model are tested on the same groups.
 
-The search itself is done with GridSearchCV.
+The search itself is done with GridSearchCV (kind "grid") or RandomizedSearchCV (kind "random").
 
 Settings and search spaces: modeling/search_spaces_constants.py.
 """
@@ -12,7 +12,7 @@ Settings and search spaces: modeling/search_spaces_constants.py.
 import numpy as np
 import pandas as pd
 from sklearn.metrics import make_scorer
-from sklearn.model_selection import GridSearchCV, StratifiedGroupKFold
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, StratifiedGroupKFold
 
 from urban_accessibility_ml.config import SEED
 from urban_accessibility_ml.modeling.evaluate import METRIC_FUNCTIONS
@@ -21,14 +21,24 @@ from urban_accessibility_ml.modeling.search_spaces_constants import (
     SEARCH_SPACES,
     TUNING_INNER_SPLITS,
     TUNING_METRIC,
+    TUNING_N_CANDIDATES,
     TUNING_TIE_TOLERANCE,
 )
+
+# max_features from fewer to more variables per split
+MAX_FEATURES_ORDER = {"sqrt": 0, 0.5: 1, 1.0: 2}
 
 # How complex is a candidate, lower is simpler (tuples are compared element by element).
 # Used to break the ties.
 COMPLEXITY = {
     # smaller C = stronger regularization; at the same C, l1 is simpler (sets weights to 0)
     "logistic_regression": lambda p: (p["C"], 0 if p["penalty"] == "l1" else 1),
+    # simpler trees (None = no limit), then bigger leaves, then fewer variables per split
+    "random_forest": lambda p: (
+        np.inf if p["max_depth"] is None else p["max_depth"],
+        -p["min_samples_leaf"],
+        MAX_FEATURES_ORDER[p["max_features"]],
+    ),
 }
 
 
@@ -56,14 +66,8 @@ def tune_model(
     # 1. Inner folds: https://nbviewer.org/github/Yorko/mlcourse.ai/blob/main/jupyter_english/tutorials/nested_cross_validation_tatyana_kudasova.ipynb
     cv = StratifiedGroupKFold(n_splits=TUNING_INNER_SPLITS, shuffle=True, random_state=SEED)
 
-    # 2. Score every candidate on every inner fold. The refit function applies the tie rule
-    search = GridSearchCV(
-        build_model(model_name),
-        SEARCH_SPACES[model_name]["space"],
-        scoring=make_scorer(METRIC_FUNCTIONS[TUNING_METRIC]),
-        cv=cv,
-        refit=lambda cv_results: _pick_best(model_name, cv_results),
-    )
+    # 2. Score every candidate on every inner fold
+    search = _build_search(model_name, cv)
     search.fit(X_train, y_train, groups=groups_train)
 
     # 3. All the candidates, with the best one marked
@@ -77,6 +81,28 @@ def tune_model(
     )
     candidates["selected"] = candidates.index == search.best_index_
     return search.best_params_, candidates
+
+
+def _build_search(model_name: str, cv: StratifiedGroupKFold) -> GridSearchCV | RandomizedSearchCV:
+    """
+    The search of a model, ready to fit: a grid or a random one, as its search space says.
+    The refit function applies the tie rule.
+    """
+    spec = SEARCH_SPACES[model_name]
+    options = {
+        "scoring": make_scorer(METRIC_FUNCTIONS[TUNING_METRIC]),
+        "cv": cv,
+        "refit": lambda cv_results: _pick_best(model_name, cv_results),
+    }
+    if spec["kind"] == "grid":
+        return GridSearchCV(build_model(model_name), spec["space"], **options)
+    return RandomizedSearchCV(
+        build_model(model_name),
+        spec["space"],
+        n_iter=TUNING_N_CANDIDATES,
+        random_state=SEED,
+        **options,
+    )
 
 
 def _pick_best(model_name: str, cv_results: dict) -> int:
