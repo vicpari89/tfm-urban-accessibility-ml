@@ -6,7 +6,7 @@ candidates of a model are tested on the same groups.
 
 The search itself is done with GridSearchCV (kind "grid") or RandomizedSearchCV (kind "random").
 
-Settings and search spaces: modeling/search_spaces_constants.py.
+Settings and search spaces: modeling/tuning/tuning_constants.py.
 """
 
 import numpy as np
@@ -19,7 +19,7 @@ from urban_accessibility_ml.config import SEED
 from urban_accessibility_ml.modeling.evaluate import METRIC_FUNCTIONS
 from urban_accessibility_ml.modeling.experiments import _index_by_key
 from urban_accessibility_ml.modeling.models import build_model
-from urban_accessibility_ml.modeling.search_spaces_constants import (
+from urban_accessibility_ml.modeling.tuning.tuning_constants import (
     SEARCH_SPACES,
     TUNING_FEATURE_SET,
     TUNING_INNER_SPLITS,

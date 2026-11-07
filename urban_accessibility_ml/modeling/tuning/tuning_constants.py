@@ -1,4 +1,4 @@
-"""Search spaces and settings of the hyperparameter tuning (see tuning.py).
+"""Search spaces and settings of the hyperparameter tuning (see tuning_search.py).
 
 Every key of a "space" must be a keyword argument of the build_model of that model
 (modeling/models/model_*.py).

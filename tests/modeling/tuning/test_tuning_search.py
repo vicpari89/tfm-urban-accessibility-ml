@@ -4,13 +4,13 @@ import pytest
 from sklearn.model_selection import ParameterGrid, ParameterSampler, StratifiedGroupKFold
 
 from urban_accessibility_ml.config import SEED
-from urban_accessibility_ml.modeling import tuning
+from urban_accessibility_ml.modeling.tuning import tuning_search as tuning
 from urban_accessibility_ml.modeling.models import build_model, model_xgboost_balanced
-from urban_accessibility_ml.modeling.search_spaces_constants import (
+from urban_accessibility_ml.modeling.tuning.tuning_constants import (
     SEARCH_SPACES,
     TUNING_N_CANDIDATES,
 )
-from urban_accessibility_ml.modeling.tuning import _pick_best, tune_all, tune_model, tune_partition
+from urban_accessibility_ml.modeling.tuning.tuning_search import _pick_best, tune_all, tune_model, tune_partition
 from urban_accessibility_ml.preprocessing.split import Split, build_all_splits
 
 N_ROWS_PER_CLASS = {0: 60, 1: 45, 2: 15}  # C, B, A: imbalanced like the real data
