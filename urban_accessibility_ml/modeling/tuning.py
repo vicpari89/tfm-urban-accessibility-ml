@@ -25,22 +25,17 @@ from urban_accessibility_ml.modeling.search_spaces_constants import (
     TUNING_TIE_TOLERANCE,
 )
 
-# max_features from fewer to more variables per split
-MAX_FEATURES_ORDER = {"sqrt": 0, 0.5: 1, 1.0: 2}
-
 # How complex is a candidate, lower is simpler (tuples are compared element by element).
 # Used to break the ties.
 COMPLEXITY = {
     # smaller C = stronger regularization; at the same C, l1 is simpler (sets weights to 0)
     "logistic_regression": lambda p: (p["C"], 0 if p["penalty"] == "l1" else 1),
-    # simpler trees (None = no limit), then bigger leaves, then fewer variables per split
-    "random_forest": lambda p: (
-        np.inf if p["max_depth"] is None else p["max_depth"],
-        -p["min_samples_leaf"],
-        MAX_FEATURES_ORDER[p["max_features"]],
-    ),
+    # simpler trees, then bigger leaves, then fewer variables per split
+    "random_forest": lambda p: (p["max_depth"], -p["min_samples_leaf"], p["max_features"]),
     # fewer leaves, then fewer trees, then bigger leaves (more min_child_samples)
     "lightgbm": lambda p: (p["num_leaves"], p["n_estimators"], -p["min_child_samples"]),
+    # simpler trees, then fewer trees, then a bigger min_child_weight (more conservative)
+    "xgboost_balanced": lambda p: (p["max_depth"], p["n_estimators"], -p["min_child_weight"]),
 }
 
 

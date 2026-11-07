@@ -144,6 +144,7 @@ class TestRareClass:
 
 class TestRandomForestSearch:
     SPACE = SEARCH_SPACES["random_forest"]["space"]
+    RANGES = {"max_depth": (3, 12), "min_samples_leaf": (1, 10), "max_features": (0.3, 1.0)}
 
     @pytest.fixture
     def tiny(self, monkeypatch):
@@ -157,21 +158,27 @@ class TestRandomForestSearch:
         assert SEARCH_SPACES["random_forest"]["kind"] == "random"
         assert TUNING_N_CANDIDATES == 30
 
-    def test_space_has_the_values_of_the_ticket(self):
-        assert self.SPACE == {
-            "max_depth": [None, 3, 5, 8, 12],
-            "min_samples_leaf": [1, 2, 5, 10],
-            "max_features": ["sqrt", 0.5, 1.0],
-        }
+    def test_space_has_the_hyperparameters_of_the_ticket(self):
+        assert set(self.SPACE) == set(self.RANGES)
 
-    def test_30_different_candidates_out_of_60(self):
+    def test_30_different_candidates(self):
         candidates = list(ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED))
         assert len(candidates) == TUNING_N_CANDIDATES
         assert len({tuple(c.items()) for c in candidates}) == TUNING_N_CANDIDATES
-        assert len(list(ParameterGrid(self.SPACE))) == 60
+
+    def test_sampled_candidates_are_inside_the_ranges(self):
+        candidates = list(ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED))
+        for name, (low, high) in self.RANGES.items():
+            assert all(low <= c[name] <= high for c in candidates), name
+
+    def test_integer_hyperparameters_are_sampled_as_integers(self):
+        candidates = ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED)
+        for c in candidates:
+            assert float(c["max_depth"]).is_integer()
+            assert float(c["min_samples_leaf"]).is_integer()
 
     def test_every_candidate_is_accepted_by_the_builder(self):
-        for params in ParameterGrid(self.SPACE):
+        for params in ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED):
             build_model("random_forest", params=params)
 
     def test_n_estimators_is_not_searched(self):
@@ -194,13 +201,13 @@ class TestRandomForestSearch:
         results = {
             "mean_test_score": np.array([0.5, 0.5, 0.5, 0.5]),
             "params": [
-                {"max_depth": None, "min_samples_leaf": 10, "max_features": "sqrt"},
-                {"max_depth": 5, "min_samples_leaf": 1, "max_features": 0.5},
-                {"max_depth": 5, "min_samples_leaf": 5, "max_features": 1.0},
-                {"max_depth": 5, "min_samples_leaf": 5, "max_features": "sqrt"},
+                {"max_depth": 12, "min_samples_leaf": 10, "max_features": 0.4},
+                {"max_depth": 5, "min_samples_leaf": 1, "max_features": 0.4},
+                {"max_depth": 5, "min_samples_leaf": 5, "max_features": 0.9},
+                {"max_depth": 5, "min_samples_leaf": 5, "max_features": 0.4},
             ],
         }
-        # depth 5 beats no limit; then the biggest leaves (5); then the fewest variables (sqrt)
+        # depth 5 beats 12; then the biggest leaves (5); then the fewest variables (0.4)
         assert _pick_best("random_forest", results) == 3
 
 
@@ -274,4 +281,76 @@ class TestLightGBMSearch:
         }
         # 7 leaves beat 31; then fewer trees (200); then the biggest leaves (min_child_samples 15)
         assert _pick_best("lightgbm", results) == 3
+
+
+class TestXGBoostSearch:
+    SPACE = SEARCH_SPACES["xgboost_balanced"]["space"]
+    RANGES = {
+        "learning_rate": (0.01, 0.3),
+        "max_depth": (2, 6),
+        "n_estimators": (100, 500),
+        "subsample": (0.6, 1.0),
+        "colsample_bytree": (0.6, 1.0),
+        "min_child_weight": (1, 10),
+    }
+
+    @pytest.fixture
+    def tiny(self, monkeypatch):
+        """A small random search, to keep the tests fast: 3 candidates of a few small trees."""
+        space = {"max_depth": [2, 3], "n_estimators": [10, 20], "min_child_weight": [1, 5]}
+        spaces = {"xgboost_balanced": {"kind": "random", "space": space}}
+        monkeypatch.setattr(tuning, "SEARCH_SPACES", spaces)
+        monkeypatch.setattr(tuning, "TUNING_N_CANDIDATES", 3)
+
+    def test_is_a_random_search_of_30_candidates(self):
+        assert SEARCH_SPACES["xgboost_balanced"]["kind"] == "random"
+        assert TUNING_N_CANDIDATES == 30
+
+    def test_space_has_the_hyperparameters_of_the_ticket(self):
+        assert set(self.SPACE) == set(self.RANGES)
+
+    def test_sampled_candidates_are_inside_the_ranges(self):
+        candidates = list(ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED))
+        assert len(candidates) == TUNING_N_CANDIDATES
+        for name, (low, high) in self.RANGES.items():
+            assert all(low <= c[name] <= high for c in candidates), name
+
+    def test_integer_hyperparameters_are_sampled_as_integers(self):
+        candidates = ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED)
+        for c in candidates:
+            for name in ["max_depth", "n_estimators", "min_child_weight"]:
+                assert float(c[name]).is_integer(), name
+
+    def test_sampled_candidates_are_accepted_by_the_builder(self):
+        for params in ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED):
+            build_model("xgboost_balanced", params=params)
+
+    def test_learning_rate_is_sampled_on_a_log_scale(self):
+        samples = ParameterSampler(self.SPACE, n_iter=200, random_state=SEED)
+        assert np.median([c["learning_rate"] for c in samples]) < 0.1  # uniform: near 0.155
+
+    def test_table_has_the_budget_and_one_selected(self, data, tiny):
+        best, table = tune_model("xgboost_balanced", *data)
+        assert len(table) == 3
+        assert table["selected"].sum() == 1
+        assert table.loc[table["selected"], "params"].iloc[0] == best
+
+    def test_reproducible_with_the_same_seed(self, data, tiny):
+        first = tune_model("xgboost_balanced", *data)
+        second = tune_model("xgboost_balanced", *data)
+        assert first[0] == second[0]
+        pd.testing.assert_frame_equal(first[1], second[1])
+
+    def test_tie_picks_the_simplest(self):
+        results = {
+            "mean_test_score": np.array([0.5, 0.5, 0.5, 0.5]),
+            "params": [
+                {"max_depth": 6, "n_estimators": 100, "min_child_weight": 1},
+                {"max_depth": 2, "n_estimators": 400, "min_child_weight": 1},
+                {"max_depth": 2, "n_estimators": 200, "min_child_weight": 1},
+                {"max_depth": 2, "n_estimators": 200, "min_child_weight": 8},
+            ],
+        }
+        # depth 2 beats 6; then fewer trees (200); then the biggest min_child_weight (8)
+        assert _pick_best("xgboost_balanced", results) == 3
 

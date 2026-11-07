@@ -25,13 +25,12 @@ SEARCH_SPACES = {
             {"C": C_VALUES, "penalty": ["l1"], "solver": ["saga"]},
         ],
     },
-    # 5 x 4 x 3 = 60 combinations: the random search tries 30 of them. n_estimators is fixed
     "random_forest": {
         "kind": "random",
         "space": {
-            "max_depth": [None, 3, 5, 8, 12],
-            "min_samples_leaf": [1, 2, 5, 10],
-            "max_features": ["sqrt", 0.5, 1.0],
+            "max_depth": randint(3, 13),  # 3-12
+            "min_samples_leaf": randint(1, 11),  # 1-10
+            "max_features": uniform(0.3, 0.7),  # 0.3-1.0
         },
     },
     "lightgbm": {
@@ -43,6 +42,17 @@ SEARCH_SPACES = {
             "min_child_samples": randint(5, 21),  # 5-20
             "subsample": uniform(0.6, 0.4),  # 0.6-1.0
             "colsample_bytree": uniform(0.6, 0.4),  # 0.6-1.0
+        },
+    },
+    "xgboost_balanced": {
+        "kind": "random",
+        "space": {
+            "learning_rate": loguniform(0.01, 0.3),
+            "max_depth": randint(2, 7),  # 2-6
+            "n_estimators": randint(100, 501),  # 100-500
+            "subsample": uniform(0.6, 0.4),  # 0.6-1.0
+            "colsample_bytree": uniform(0.6, 0.4),  # 0.6-1.0
+            "min_child_weight": randint(1, 11),  # 1-10
         },
     },
 }
