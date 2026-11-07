@@ -1,6 +1,6 @@
 """Experiment matrix: run_one (train.py) for every combination, and save the results.
 
-    preprocessing/split.build_all_splits -> run_experiments -> save_results
+preprocessing/split.build_all_splits -> run_experiments -> save_results
 """
 
 from itertools import product

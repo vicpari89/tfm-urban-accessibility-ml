@@ -37,7 +37,9 @@ def dimensions_for(feature_set: str) -> list[str]:
         raise ValueError(f"Unknown feature set: {feature_set}")
     if feature_set == "completo":
         return list(DIMENSIONS)
-    return [d for d in DIMENSIONS if max(VIABILITY[d][s] for s in sources[feature_set]) >= THRESHOLD]
+    return [
+        d for d in DIMENSIONS if max(VIABILITY[d][s] for s in sources[feature_set]) >= THRESHOLD
+    ]
 
 
 def encode_class(classes: pd.Series) -> pd.Series:
@@ -58,7 +60,9 @@ def check_columns(df: pd.DataFrame, columns: list[str]) -> None:
         raise ValueError(f"Total scores cannot be used as inputs (target leakage): {leaks}")
 
 
-def get_xy(df: pd.DataFrame, feature_set: str, profile: str, include_all_profiles: bool = False) -> tuple[pd.DataFrame, pd.Series]:
+def get_xy(
+    df: pd.DataFrame, feature_set: str, profile: str, include_all_profiles: bool = False
+) -> tuple[pd.DataFrame, pd.Series]:
     """
     Inputs X and target y for a feature set and a profile.
     :param df: Dataframe.
@@ -69,8 +73,10 @@ def get_xy(df: pd.DataFrame, feature_set: str, profile: str, include_all_profile
     """
 
     # 1. Validate the arguments
-    if feature_set not in FEATURE_SETS:  raise ValueError
-    if profile not in PROFILES:          raise ValueError
+    if feature_set not in FEATURE_SETS:
+        raise ValueError
+    if profile not in PROFILES:
+        raise ValueError
 
     # 2. Get the dimensions of this feature set
     dimensions = dimensions_for(feature_set)
@@ -78,7 +84,7 @@ def get_xy(df: pd.DataFrame, feature_set: str, profile: str, include_all_profile
     # 3. Get column names
     if include_all_profiles:
         columns = [f"puntuacion_{d}_{p}" for d in dimensions for p in PROFILES]
-    else: # Just for one profile
+    else:  # Just for one profile
         columns = [f"puntuacion_{d}_{profile}" for d in dimensions]
 
     # 4. Safety checks
