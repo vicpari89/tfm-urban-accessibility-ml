@@ -80,6 +80,12 @@ tune: requirements
 	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.modeling.tuning.tuning_run
 
 
+## Run the experiment matrix with the default and the tuned hyperparameters and write the 2 CSV in reports/results/
+.PHONY: experiments
+experiments: requirements
+	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.modeling.experiments_run
+
+
 ## Build the documentation site in docs/site/ (runs the notebooks; EXECUTE=0 skips it)
 .PHONY: docs
 docs:
