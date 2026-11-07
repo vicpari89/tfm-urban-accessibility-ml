@@ -203,3 +203,75 @@ class TestRandomForestSearch:
         # depth 5 beats no limit; then the biggest leaves (5); then the fewest variables (sqrt)
         assert _pick_best("random_forest", results) == 3
 
+
+class TestLightGBMSearch:
+    SPACE = SEARCH_SPACES["lightgbm"]["space"]
+    RANGES = {
+        "learning_rate": (0.01, 0.3),
+        "num_leaves": (7, 63),
+        "n_estimators": (100, 500),
+        "min_child_samples": (5, 20),
+        "subsample": (0.6, 1.0),
+        "colsample_bytree": (0.6, 1.0),
+    }
+
+    @pytest.fixture
+    def tiny(self, monkeypatch):
+        """A small random search, to keep the tests fast: 3 candidates of a few small trees."""
+        space = {"num_leaves": [7, 15], "n_estimators": [10, 20], "min_child_samples": [5, 10]}
+        spaces = {"lightgbm": {"kind": "random", "space": space}}
+        monkeypatch.setattr(tuning, "SEARCH_SPACES", spaces)
+        monkeypatch.setattr(tuning, "TUNING_N_CANDIDATES", 3)
+
+    def test_is_a_random_search_of_30_candidates(self):
+        assert SEARCH_SPACES["lightgbm"]["kind"] == "random"
+        assert TUNING_N_CANDIDATES == 30
+
+    def test_space_has_the_hyperparameters_of_the_ticket(self):
+        assert set(self.SPACE) == set(self.RANGES)
+
+    def test_sampled_candidates_are_inside_the_ranges(self):
+        candidates = list(ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED))
+        assert len(candidates) == TUNING_N_CANDIDATES
+        for name, (low, high) in self.RANGES.items():
+            assert all(low <= c[name] <= high for c in candidates), name
+
+    def test_integer_hyperparameters_are_sampled_as_integers(self):
+        candidates = ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED)
+        for c in candidates:
+            for name in ["num_leaves", "n_estimators", "min_child_samples"]:
+                assert float(c[name]).is_integer(), name
+
+    def test_sampled_candidates_are_accepted_by_the_builder(self):
+        for params in ParameterSampler(self.SPACE, n_iter=TUNING_N_CANDIDATES, random_state=SEED):
+            build_model("lightgbm", params=params)
+
+    def test_learning_rate_is_sampled_on_a_log_scale(self):
+        samples = ParameterSampler(self.SPACE, n_iter=200, random_state=SEED)
+        assert np.median([c["learning_rate"] for c in samples]) < 0.1  # uniform: near 0.155
+
+    def test_table_has_the_budget_and_one_selected(self, data, tiny):
+        best, table = tune_model("lightgbm", *data)
+        assert len(table) == 3
+        assert table["selected"].sum() == 1
+        assert table.loc[table["selected"], "params"].iloc[0] == best
+
+    def test_reproducible_with_the_same_seed(self, data, tiny):
+        first = tune_model("lightgbm", *data)
+        second = tune_model("lightgbm", *data)
+        assert first[0] == second[0]
+        pd.testing.assert_frame_equal(first[1], second[1])
+
+    def test_tie_picks_the_simplest(self):
+        results = {
+            "mean_test_score": np.array([0.5, 0.5, 0.5, 0.5]),
+            "params": [
+                {"num_leaves": 31, "n_estimators": 100, "min_child_samples": 20},
+                {"num_leaves": 7, "n_estimators": 400, "min_child_samples": 5},
+                {"num_leaves": 7, "n_estimators": 200, "min_child_samples": 5},
+                {"num_leaves": 7, "n_estimators": 200, "min_child_samples": 15},
+            ],
+        }
+        # 7 leaves beat 31; then fewer trees (200); then the biggest leaves (min_child_samples 15)
+        assert _pick_best("lightgbm", results) == 3
+

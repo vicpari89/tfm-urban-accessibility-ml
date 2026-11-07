@@ -39,6 +39,8 @@ COMPLEXITY = {
         -p["min_samples_leaf"],
         MAX_FEATURES_ORDER[p["max_features"]],
     ),
+    # fewer leaves, then fewer trees, then bigger leaves (more min_child_samples)
+    "lightgbm": lambda p: (p["num_leaves"], p["n_estimators"], -p["min_child_samples"]),
 }
 
 
