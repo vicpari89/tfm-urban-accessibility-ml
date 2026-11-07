@@ -24,6 +24,26 @@ TOLERANCE = 0.005
 SIMPLE = {"C": 0.1, "penalty": "l1", "solver": "saga"}
 COMPLEX = {"C": 10, "penalty": "l2", "solver": "lbfgs"}
 
+# The two candidates of the light logistic regression search used by the tests that need a real fit
+SMALL_LR_SPACE = [
+    {"C": [100], "penalty": ["l2"], "solver": ["lbfgs"]},
+    {"C": [0.001], "penalty": ["l1"], "solver": ["saga"]},
+]
+N_SMALL_LR_CANDIDATES = 2
+
+
+def light_build_model(name):
+    """
+    build_model for the tests: one thread (n_jobs=-1 costs more than it saves with so few rows)
+    and small forests, so the fits of the tests are fast.
+    """
+    model = build_model(name)
+    if "n_jobs" in model.get_params():
+        model.set_params(n_jobs=1)
+    if name == "random_forest":
+        model.set_params(n_estimators=10)
+    return model
+
 
 @pytest.fixture
 def data():
@@ -52,6 +72,15 @@ class TestSearchSpace:
             build_model("logistic_regression", params=params)
 
 
+@pytest.fixture
+def small_lr(monkeypatch):
+    """The logistic regression search with 2 candidates instead of the 16 of the real one."""
+    spaces = {"logistic_regression": {"kind": "grid", "space": SMALL_LR_SPACE}}
+    monkeypatch.setattr(tuning, "SEARCH_SPACES", spaces)
+    monkeypatch.setattr(tuning, "build_model", light_build_model)
+
+
+@pytest.mark.usefixtures("small_lr")
 class TestTuneModel:
     def test_unknown_model(self, data):
         with pytest.raises(ValueError, match="No search space"):
@@ -59,7 +88,7 @@ class TestTuneModel:
 
     def test_table_has_every_candidate(self, data):
         _, table = tune_model("logistic_regression", *data)
-        assert len(table) == N_CANDIDATES
+        assert len(table) == N_SMALL_LR_CANDIDATES
         assert {"params", "f1_macro_mean", "f1_macro_std", "selected"} <= set(table.columns)
 
     def test_returns_the_selected_row(self, data):
@@ -120,6 +149,7 @@ class TestPickBest:
         assert (_pick_best("logistic_regression", results) == 0) == complex_wins
 
 
+@pytest.mark.usefixtures("small_lr")
 class TestRareClass:
     def test_fold_without_class_a_in_validation_does_not_fail(self, data):
         X, y, groups = data
@@ -153,7 +183,7 @@ class TestRandomForestSearch:
         space = {"max_depth": [2, 3], "min_samples_leaf": [1, 5], "max_features": ["sqrt", 1.0]}
         monkeypatch.setattr(tuning, "SEARCH_SPACES", {"random_forest": {"kind": "random", "space": space}})
         monkeypatch.setattr(tuning, "TUNING_N_CANDIDATES", 3)
-        monkeypatch.setattr(tuning, "build_model", lambda name: build_model(name).set_params(n_estimators=10))
+        monkeypatch.setattr(tuning, "build_model", light_build_model)
 
     def test_is_a_random_search_of_30_candidates(self):
         assert SEARCH_SPACES["random_forest"]["kind"] == "random"
@@ -230,6 +260,7 @@ class TestLightGBMSearch:
         spaces = {"lightgbm": {"kind": "random", "space": space}}
         monkeypatch.setattr(tuning, "SEARCH_SPACES", spaces)
         monkeypatch.setattr(tuning, "TUNING_N_CANDIDATES", 3)
+        monkeypatch.setattr(tuning, "build_model", light_build_model)
 
     def test_is_a_random_search_of_30_candidates(self):
         assert SEARCH_SPACES["lightgbm"]["kind"] == "random"
@@ -302,6 +333,7 @@ class TestXGBoostSearch:
         spaces = {"xgboost_balanced": {"kind": "random", "space": space}}
         monkeypatch.setattr(tuning, "SEARCH_SPACES", spaces)
         monkeypatch.setattr(tuning, "TUNING_N_CANDIDATES", 3)
+        monkeypatch.setattr(tuning, "build_model", light_build_model)
 
     def test_is_a_random_search_of_30_candidates(self):
         assert SEARCH_SPACES["xgboost_balanced"]["kind"] == "random"
@@ -404,24 +436,23 @@ def tiny_all(monkeypatch):
     }
     monkeypatch.setattr(tuning, "SEARCH_SPACES", spaces)
     monkeypatch.setattr(tuning, "TUNING_N_CANDIDATES", 2)
-    original = tuning.build_model
-    monkeypatch.setattr(
-        tuning,
-        "build_model",
-        lambda name: original(name).set_params(**({"n_estimators": 5} if name == "random_forest" else {})),
-    )
+    monkeypatch.setattr(tuning, "build_model", light_build_model)
     return spaces
+
+
+def fake_table():
+    """The table that a tune_model would return, without fitting anything."""
+    return {}, pd.DataFrame({"params": [{}], "selected": [True]})
 
 
 class TestTunePartition:
     def test_never_reads_the_test_rows(self, city_df, tiny_all, monkeypatch):
         split = build_all_splits(city_df)[0]
         seen = []
-        real = tuning.tune_model
 
         def spy(model_name, X_train, y_train, groups_train):
             seen.append(set(X_train.index))
-            return real(model_name, X_train, y_train, groups_train)
+            return fake_table()  # what matters here is the rows it receives, not the fit
 
         monkeypatch.setattr(tuning, "tune_model", spy)
         tune_partition(city_df, split)
@@ -455,48 +486,51 @@ class TestTuneAll:
         all_splits = build_all_splits(city_df)
         return [all_splits[0], all_splits[10]]  # within_city Albacete 0, and a cross_city one
 
-    def test_keys_are_the_split_keys(self, city_df, tiny_all, splits):
+    @pytest.fixture
+    def fake_partition(self, monkeypatch):
+        """tune_partition without fitting: it records the dataframe it receives for each split."""
+        received = []
+
+        def fake(df, split):
+            received.append((df, split.key))
+            best, table = fake_table()
+            return {"logistic_regression": {"C": 1}}, table.assign(name=split.name)
+
+        monkeypatch.setattr(tuning, "tune_partition", fake)
+        return received
+
+    def test_result_has_every_partition_with_every_model_and_candidate(
+        self, city_df, tiny_all, splits
+    ):
         best, candidates = tune_all(city_df, splits)
         assert list(best) == [s.key for s in splits]
         assert any(k.startswith("cross_city/") and "->" in k for k in best)
-        assert set(candidates["name"]) == {s.name for s in splits}
-
-    def test_every_partition_has_the_params_of_every_model(self, city_df, tiny_all, splits):
-        best, _ = tune_all(city_df, splits)
         assert all(list(models) == list(tiny_all) for models in best.values())
-
-    def test_calls_tune_partition_once_per_partition_with_its_split(
-        self, city_df, tiny_all, splits, monkeypatch
-    ):
-        calls = []
-        real = tuning.tune_partition
-
-        def spy(df, split):
-            calls.append(split.key)
-            return real(df, split)
-
-        monkeypatch.setattr(tuning, "tune_partition", spy)
-        tune_all(city_df, splits)
-        assert calls == [s.key for s in splits]
-
-    def test_accepts_key_tramo_as_a_column(self, city_df, tiny_all, splits):
-        best, _ = tune_all(city_df.reset_index(drop=True), splits)
-        assert list(best) == [s.key for s in splits]
-
-    def test_candidates_table_has_every_partition_and_model(self, city_df, tiny_all, splits):
-        _, candidates = tune_all(city_df, splits)
         pairs = candidates[["strategy", "name", "fold", "model"]].drop_duplicates()
         assert len(pairs) == len(splits) * len(tiny_all)
 
-    def test_is_reproducible(self, city_df, tiny_all, splits):
-        first = tune_all(city_df, splits)
-        second = tune_all(city_df, splits)
-        assert first[0] == second[0]
-        pd.testing.assert_frame_equal(first[1], second[1])
+    def test_calls_tune_partition_once_per_partition(self, city_df, splits, fake_partition):
+        tune_all(city_df, splits)
+        assert [key for _, key in fake_partition] == [s.key for s in splits]
 
-    def test_does_not_modify_the_dataframe(self, city_df, tiny_all, splits):
+    def test_gives_tune_partition_the_dataframe_indexed_by_key_tramo(
+        self, city_df, splits, fake_partition
+    ):
+        tune_all(city_df.reset_index(drop=True), splits)  # key_tramo only as a column
+        assert all(df.index.name == "key_tramo" for df, _ in fake_partition)
+
+    def test_joins_the_tables_of_all_the_partitions(self, city_df, splits, fake_partition):
+        _, candidates = tune_all(city_df, splits)
+        assert list(candidates["name"]) == [s.name for s in splits]
+
+    def test_does_not_modify_the_dataframe(self, city_df, splits, fake_partition):
         plain = city_df.reset_index(drop=True)
         before = plain.copy()
         tune_all(plain, splits)
         pd.testing.assert_frame_equal(plain, before)
 
+    def test_is_reproducible(self, city_df, tiny_all, splits):
+        first = tune_all(city_df, splits[:1])
+        second = tune_all(city_df, splits[:1])
+        assert first[0] == second[0]
+        pd.testing.assert_frame_equal(first[1], second[1])
