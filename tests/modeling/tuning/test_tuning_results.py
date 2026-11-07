@@ -5,7 +5,11 @@ import pandas as pd
 import pytest
 
 from urban_accessibility_ml.modeling.tuning import tuning_search as tuning
-from urban_accessibility_ml.modeling.tuning.tuning_results import save_best_params, save_candidates
+from urban_accessibility_ml.modeling.tuning.tuning_results import (
+    load_best_params,
+    save_best_params,
+    save_candidates,
+)
 from urban_accessibility_ml.preprocessing.split import build_all_splits
 
 BEST = {
@@ -39,6 +43,10 @@ class TestSaveBestParams:
     def test_round_trip_through_json(self, tmp_path):
         path = save_best_params(BEST, tmp_path / "best_params.json")
         assert json.loads(path.read_text()) == BEST  # None <-> null, and the '->' key
+
+    def test_load_best_params_reads_what_was_saved(self, tmp_path):
+        path = save_best_params(BEST, tmp_path / "best_params.json")
+        assert load_best_params(path) == BEST
 
     def test_creates_the_folders_and_returns_the_path(self, tmp_path):
         path = save_best_params(BEST, tmp_path / "a" / "b" / "best_params.json")

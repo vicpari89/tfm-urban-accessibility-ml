@@ -21,6 +21,7 @@ def run_experiments(
     feature_sets: list[str] | None = None,
     profiles: list[str] | None = None,
     model_names: list[str] | None = None,
+    hyperparameters: dict | None = None,
 ) -> pd.DataFrame:
     """
     Run every combination of split x feature set x profile x model with run_one.
@@ -30,6 +31,8 @@ def run_experiments(
     :param feature_sets: feature sets to combine. By default config.FEATURE_SETS.
     :param profiles: profiles to combine. By default config.PROFILES.
     :param model_names: models to combine. By default config.MATRIX_MODELS.
+    :param hyperparameters: {Split.key: {model: params}}, for example the result of the tuning
+        (modeling/tuning). Each run uses the ones of its split and model. None: the model defaults.
     :return: one row per model and fold.
     :raises ValueError: if a feature set, a profile or a model does not exist.
     """
@@ -48,7 +51,7 @@ def run_experiments(
     # 3. One run_one per combination, with a progress bar
     combinations = list(product(splits, feature_sets, profiles, model_names))
     rows = [
-        run_one(indexed, split, feature_set, profile, model_name)
+        run_one(indexed, split, feature_set, profile, model_name, hyperparameters)
         for split, feature_set, profile, model_name in tqdm(combinations, desc="experiments")
     ]
     return pd.DataFrame(rows)

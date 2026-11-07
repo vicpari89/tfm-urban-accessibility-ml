@@ -1,6 +1,7 @@
-"""Write the results of the tuning (tuning_search.py) to files.
+"""Write and read the results of the tuning (tuning_search.py).
 
-search.tune_all -> save_best_params (JSON) and save_candidates (CSV)
+tuning_search.tune_all -> save_best_params (JSON) and save_candidates (CSV)
+load_best_params (JSON) -> train.run_one and experiments.run_experiments
 """
 
 import json
@@ -22,6 +23,16 @@ def save_best_params(best_params: dict, path: str | Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(best_params, indent=2, default=_to_python) + "\n")
     return path
+
+
+def load_best_params(path: str | Path) -> dict:
+    """
+    Read the JSON of save_best_params.
+
+    :param path: JSON file to read.
+    :return: {Split.key: {model: params}}, ready for run_one and run_experiments.
+    """
+    return json.loads(Path(path).read_text())
 
 
 def save_candidates(candidates: pd.DataFrame, path: str | Path) -> Path:
