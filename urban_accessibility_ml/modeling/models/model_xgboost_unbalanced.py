@@ -8,13 +8,15 @@ from xgboost import XGBClassifier
 from urban_accessibility_ml.config import SEED
 from urban_accessibility_ml.modeling.models import model_xgboost_balanced
 
-NEED_SAMPLE_WEIGHT = False  # True: run_one trains with balanced sample_weight
-
 
 def build_model(seed: int = SEED) -> XGBClassifier:
-    """Return an XGBoost classifier, the same as model_xgboost_balanced.
+    """Return a plain XGBClassifier, with the same defaults as model_xgboost_balanced.
 
     Input:  seed (int)
-    Output: an UNTRAINED XGBClassifier
+    Output: an UNTRAINED XGBClassifier (it does not balance the classes)
     """
-    return model_xgboost_balanced.build_model(seed)
+    return XGBClassifier(
+        n_estimators=model_xgboost_balanced.N_ESTIMATORS,
+        random_state=seed,
+        n_jobs=model_xgboost_balanced.N_JOBS,
+    )

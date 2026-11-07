@@ -13,7 +13,6 @@ CLASS_WEIGHT = "balanced"
 N_JOBS = -1
 VERBOSITY = -1  # silent
 SUBSAMPLE_FREQ = 1  # without it LightGBM ignores subsample (no effect while subsample = 1.0)
-NEED_SAMPLE_WEIGHT = False
 
 
 def build_model(

@@ -5,7 +5,7 @@ from sklearn.model_selection import ParameterGrid, ParameterSampler, StratifiedG
 
 from urban_accessibility_ml.config import SEED
 from urban_accessibility_ml.modeling import tuning
-from urban_accessibility_ml.modeling.models import build_model
+from urban_accessibility_ml.modeling.models import build_model, model_xgboost_balanced
 from urban_accessibility_ml.modeling.search_spaces_constants import (
     SEARCH_SPACES,
     TUNING_N_CANDIDATES,
@@ -144,7 +144,7 @@ class TestRareClass:
 
 class TestRandomForestSearch:
     SPACE = SEARCH_SPACES["random_forest"]["space"]
-    RANGES = {"max_depth": (3, 12), "min_samples_leaf": (1, 10), "max_features": (0.3, 1.0)}
+    RANGES = {"max_depth": (3, 15), "min_samples_leaf": (1, 10), "max_features": (0.3, 1.0)}
 
     @pytest.fixture
     def tiny(self, monkeypatch):
@@ -340,6 +340,24 @@ class TestXGBoostSearch:
         second = tune_model("xgboost_balanced", *data)
         assert first[0] == second[0]
         pd.testing.assert_frame_equal(first[1], second[1])
+
+    def test_weights_are_computed_in_each_inner_fold(self, data, tiny, monkeypatch):
+        X, y, groups = data
+        calls = []
+        real = model_xgboost_balanced.compute_sample_weight
+
+        def spy(class_weight, y_fit):
+            calls.append(len(y_fit))
+            return real(class_weight, y_fit)
+
+        monkeypatch.setattr(model_xgboost_balanced, "compute_sample_weight", spy)
+        tune_model("xgboost_balanced", X, y, groups)
+        n_fits = 3 * N_INNER_FOLDS  # 3 candidates x 3 inner folds
+        assert len(calls) == n_fits + 1  # plus the final refit with the best candidate
+        assert all(n < len(y) for n in calls[:n_fits])  # only the rows training in that fold
+        assert calls[-1] == len(y)  # the refit uses all the train rows
+        # inner train sets: each row is in 2 of the 3 inner train sets of a candidate
+        assert sum(calls[:N_INNER_FOLDS]) == 2 * len(y)
 
     def test_tie_picks_the_simplest(self):
         results = {

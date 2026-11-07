@@ -28,7 +28,7 @@ SEARCH_SPACES = {
     "random_forest": {
         "kind": "random",
         "space": {
-            "max_depth": randint(3, 13),  # 3-12
+            "max_depth": randint(3, 16),  # 3-15
             "min_samples_leaf": randint(1, 11),  # 1-10
             "max_features": uniform(0.3, 0.7),  # 0.3-1.0
         },

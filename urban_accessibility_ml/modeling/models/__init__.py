@@ -23,9 +23,6 @@ MODEL_MODULES = {
 
 BUILDERS = {name: module.build_model for name, module in MODEL_MODULES.items()}
 
-# Models that must be trained with balanced sample weights (see run_one in train.py)
-NEED_SAMPLE_WEIGHT = {name: module.NEED_SAMPLE_WEIGHT for name, module in MODEL_MODULES.items()}
-
 
 def build_model(name: str, seed: int = SEED, params: dict | None = None) -> BaseEstimator:
     """

@@ -12,7 +12,6 @@ from urban_accessibility_ml.config import SEED
 N_ESTIMATORS = 300
 CLASS_WEIGHT = "balanced"
 N_JOBS = -1
-NEED_SAMPLE_WEIGHT = False
 
 
 def build_model(

@@ -4,6 +4,7 @@ import pytest
 
 from urban_accessibility_ml.config import DIMENSIONS, METRICS, PROFILES, TARGET_COLUMNS
 from urban_accessibility_ml.modeling import train
+from urban_accessibility_ml.modeling.models import model_xgboost_balanced
 from urban_accessibility_ml.modeling.train import run_one
 from urban_accessibility_ml.preprocessing.split import Split
 
@@ -67,20 +68,22 @@ def test_run_one_rows_collect_into_a_dataframe(df):
     assert pd.DataFrame(rows)["model"].tolist() == ["dummy", "logistic_regression"]
 
 
-def test_run_one_balances_the_classes_when_the_model_needs_it(df, monkeypatch):
+def test_run_one_trains_xgboost_balanced_with_weights_of_the_train_rows(df, monkeypatch):
     calls = []
-    real = train.compute_sample_weight
+    real = model_xgboost_balanced.compute_sample_weight
 
     def spy(class_weight, y):
         calls.append(len(y))
         return real(class_weight, y)
 
-    monkeypatch.setattr(train, "compute_sample_weight", spy)
+    monkeypatch.setattr(model_xgboost_balanced, "compute_sample_weight", spy)
     run_one(df, SPLIT, FEATURE_SET, PROFILE, "xgboost_balanced")
     assert calls == [len(TRAIN_IDS)]  # one weight per TRAIN row
 
 
 @pytest.mark.parametrize("model_name", ["dummy", "logistic_regression", "random_forest", "xgboost_unbalanced", "lightgbm"])
 def test_run_one_does_not_compute_weights_for_the_other_models(df, monkeypatch, model_name):
-    monkeypatch.setattr(train, "compute_sample_weight", lambda *a: pytest.fail("weights were computed"))
+    monkeypatch.setattr(
+        model_xgboost_balanced, "compute_sample_weight", lambda *a: pytest.fail("weights were computed")
+    )
     run_one(df, SPLIT, FEATURE_SET, PROFILE, model_name)

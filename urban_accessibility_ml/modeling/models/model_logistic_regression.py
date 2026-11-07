@@ -11,7 +11,6 @@ from urban_accessibility_ml.config import SEED
 
 CLASS_WEIGHT = "balanced"
 MAX_ITER = 1000
-NEED_SAMPLE_WEIGHT = False
 
 
 def build_model(
