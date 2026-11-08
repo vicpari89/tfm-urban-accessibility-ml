@@ -1,7 +1,9 @@
 import os
+import warnings
 
 import pandas as pd
 import pytest
+from sklearn.exceptions import ConvergenceWarning
 from typer.testing import CliRunner
 
 from urban_accessibility_ml.modeling.tuning import tuning_run
@@ -117,6 +119,12 @@ class TestRunTuning:
         run_tuning(city_df, *files, dry_run=True)
         assert fake_partition == []
         assert not files[0].exists()
+
+    def test_convergence_warnings_are_silenced(self, city_df, fake_partition, files):
+        run_tuning(city_df, *files, dry_run=True)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.warn("did not converge", ConvergenceWarning)
+        assert caught == []
 
     def test_passes_n_jobs(self, city_df, fake_partition, files):
         run_tuning(city_df, *files, n_jobs=3)

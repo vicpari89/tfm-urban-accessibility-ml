@@ -32,12 +32,12 @@ SMALL_LR_SPACE = [
 N_SMALL_LR_CANDIDATES = 2
 
 
-def light_build_model(name):
+def light_build_model(name, params=None):
     """
     build_model for the tests: one thread (n_jobs=-1 costs more than it saves with so few rows)
     and small forests, so the fits of the tests are fast.
     """
-    model = build_model(name)
+    model = build_model(name, params=params)
     if "n_jobs" in model.get_params():
         model.set_params(n_jobs=1)
     if name == "random_forest":
@@ -501,3 +501,14 @@ class TestTimeCandidate:
 
     def test_a_random_search_has_tuning_n_candidates(self, data):
         assert time_candidate("random_forest", *data)[1] == TUNING_N_CANDIDATES
+
+
+class TestOneThreadPerModel:
+    @pytest.mark.parametrize("model_name", ["random_forest", "lightgbm", "xgboost_balanced"])
+    def test_models_get_one_thread_when_the_candidates_run_in_parallel(self, model_name):
+        cv = StratifiedGroupKFold(n_splits=3)
+        assert tuning._build_search(model_name, cv, 4).estimator.get_params()["n_jobs"] == 1
+
+    def test_models_keep_their_threads_when_the_candidates_do_not(self):
+        cv = StratifiedGroupKFold(n_splits=3)
+        assert tuning._build_search("random_forest", cv, 1).estimator.get_params()["n_jobs"] == -1

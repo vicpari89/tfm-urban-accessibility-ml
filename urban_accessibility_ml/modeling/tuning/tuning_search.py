@@ -129,7 +129,11 @@ def train_data(df: pd.DataFrame, split: Split, feature_set: str):
 
 
 def time_candidate(
-    model_name: str, X_train: pd.DataFrame, y_train: pd.Series, groups_train: pd.Series
+    model_name: str,
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    groups_train: pd.Series,
+    n_jobs: int = 1,
 ) -> tuple[float, int]:
     """
     Seconds that one candidate takes the inner folds (mean of 3 candidates spread over the
@@ -147,7 +151,7 @@ def time_candidate(
     start = time.perf_counter()
     for params in chosen:
         for train, _ in folds:
-            build_model(model_name, params=params).fit(X_train.iloc[train], y_train.iloc[train])
+            _estimator(model_name, params, n_jobs).fit(X_train.iloc[train], y_train.iloc[train])
     return (time.perf_counter() - start) / len(chosen), len(candidates)
 
 
@@ -166,14 +170,25 @@ def _build_search(
         "refit": lambda cv_results: _pick_best(model_name, cv_results),
     }
     if spec["kind"] == "grid":
-        return GridSearchCV(build_model(model_name), spec["space"], **options)
+        return GridSearchCV(_estimator(model_name, None, n_jobs), spec["space"], **options)
     return RandomizedSearchCV(
-        build_model(model_name),
+        _estimator(model_name, None, n_jobs),
         spec["space"],
         n_iter=TUNING_N_CANDIDATES,
         random_state=SEED,
         **options,
     )
+
+
+def _estimator(model_name: str, params: dict | None, n_jobs: int):
+    """
+    The model. If the candidates run in parallel (n_jobs > 1) it gets one thread: the models use
+    all the cores by default, and with the two levels the threads pile up and everything slows down.
+    """
+    model = build_model(model_name, params=params)
+    if n_jobs > 1 and "n_jobs" in model.get_params():
+        model.set_params(n_jobs=1)
+    return model
 
 
 def _pick_best(model_name: str, cv_results: dict) -> int:

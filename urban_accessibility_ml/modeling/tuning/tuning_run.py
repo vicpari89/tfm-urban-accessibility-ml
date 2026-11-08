@@ -6,9 +6,11 @@ make tune
 
 import os
 from pathlib import Path
+import warnings
 
 from loguru import logger
 import pandas as pd
+from sklearn.exceptions import ConvergenceWarning
 from tqdm.auto import tqdm
 import typer
 
@@ -56,7 +58,7 @@ def estimate_seconds(indexed: pd.DataFrame, splits: list, saved: dict, n_jobs: i
     data = train_data(indexed, biggest, TUNING_FEATURE_SET)
     per_unit = 0.0
     for model_name in SEARCH_SPACES:
-        seconds, n_candidates = time_candidate(model_name, *data)
+        seconds, n_candidates = time_candidate(model_name, *data, n_jobs)
         logger.info(f"{model_name}: {seconds:.1f} s per candidate, {n_candidates} candidates")
         per_unit += seconds * n_candidates
     return per_unit * len(pending) / n_jobs
@@ -78,6 +80,8 @@ def run_tuning(
     :param overwrite: delete the two files first and start from scratch.
     :param n_jobs: number of parallel runs.
     """
+    # saga does not converge in some candidates; it is not an error (sklearn sends it to the workers)
+    warnings.filterwarnings("ignore", category=ConvergenceWarning)
     if overwrite:
         for path in (best_params_path, candidates_path):
             path.unlink(missing_ok=True)
