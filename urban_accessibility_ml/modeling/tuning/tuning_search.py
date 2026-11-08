@@ -13,15 +13,12 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import make_scorer
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, StratifiedGroupKFold
-from tqdm.auto import tqdm
 
 from urban_accessibility_ml.config import SEED
 from urban_accessibility_ml.modeling.evaluate import METRIC_FUNCTIONS
-from urban_accessibility_ml.modeling.experiments import _index_by_key
 from urban_accessibility_ml.modeling.models import build_model
 from urban_accessibility_ml.modeling.tuning.tuning_constants import (
     SEARCH_SPACES,
-    TUNING_FEATURE_SET,
     TUNING_INNER_SPLITS,
     TUNING_METRIC,
     TUNING_N_CANDIDATES,
@@ -50,6 +47,7 @@ def tune_model(
     X_train: pd.DataFrame,
     y_train: pd.Series,
     groups_train: pd.Series,
+    n_jobs: int = 1,
 ) -> tuple[dict, pd.DataFrame]:
     """
     Choose the best hyperparameters of one model, using only the train rows of one partition.
@@ -58,6 +56,7 @@ def tune_model(
     :param X_train: inputs of the train rows.
     :param y_train: encoded classes of the train rows.
     :param groups_train: street of each train row, to keep a street in a single inner fold.
+    :param n_jobs: number of parallel runs.
     :return: (best_params, candidates). candidates has one row per candidate, with its params, the
         mean and std of the metric over the inner folds, and selected (True for the best one).
         Candidates within TUNING_TIE_TOLERANCE of the best mean are tied: the simplest wins.
@@ -70,7 +69,7 @@ def tune_model(
     cv = StratifiedGroupKFold(n_splits=TUNING_INNER_SPLITS, shuffle=True, random_state=SEED)
 
     # 2. Score every candidate on every inner fold
-    search = _build_search(model_name, cv)
+    search = _build_search(model_name, cv, n_jobs)
     search.fit(X_train, y_train, groups=groups_train)
 
     # 3. All the candidates, with the best one marked
@@ -86,14 +85,17 @@ def tune_model(
     return search.best_params_, candidates
 
 
-def tune_partition(df: pd.DataFrame, split: Split, feature_set: str) -> tuple[dict, pd.DataFrame]:
+def tune_partition(
+    df: pd.DataFrame, split: Split, feature_set: str, n_jobs: int = 1
+) -> tuple[dict, pd.DataFrame]:
     """
-    Tune every model of SEARCH_SPACES with the TRAIN rows of one partition and one feature set
-    (with the TUNING_PROFILE as reference). The test rows are never read.
+    Tune every model of SEARCH_SPACES with the TRAIN rows of one partition and feature set.
+    The test rows are never read.
 
     :param df: unified dataset, indexed by key_tramo.
     :param split: one train/test partition.
     :param feature_set: one of config.FEATURE_SETS.
+    :param n_jobs: number of parallel runs.
     :return: (best_params, candidates). best_params is {model: params}. candidates joins the
         candidates of every model, with the columns strategy, name, fold and model.
     """
@@ -103,7 +105,9 @@ def tune_partition(df: pd.DataFrame, split: Split, feature_set: str) -> tuple[di
 
     best_params, tables = {}, []
     for model_name in SEARCH_SPACES:
-        best_params[model_name], table = tune_model(model_name, X_train, y_train, groups_train)
+        best_params[model_name], table = tune_model(
+            model_name, X_train, y_train, groups_train, n_jobs
+        )
         tables.append(
             table.assign(
                 strategy=split.strategy, name=split.name, fold=split.fold, model=model_name
@@ -112,24 +116,9 @@ def tune_partition(df: pd.DataFrame, split: Split, feature_set: str) -> tuple[di
     return best_params, pd.concat(tables, ignore_index=True)
 
 
-def tune_all(df: pd.DataFrame, splits: list[Split]) -> tuple[dict, pd.DataFrame]:
-    """
-    tune_partition for every partition.
-
-    :param df: unified dataset, with key_tramo as the index or as a column.
-    :param splits: partitions to tune (build_all_splits).
-    :return: (best_params, candidates). best_params is {Split.key: {model: params}}; candidates
-        joins the tables of all the partitions.
-    """
-    indexed = _index_by_key(df)
-    best_params, tables = {}, []
-    for split in tqdm(splits, desc="tuning"):
-        best_params[split.key], table = tune_partition(indexed, split, TUNING_FEATURE_SET)
-        tables.append(table)
-    return best_params, pd.concat(tables, ignore_index=True)
-
-
-def _build_search(model_name: str, cv: StratifiedGroupKFold) -> GridSearchCV | RandomizedSearchCV:
+def _build_search(
+    model_name: str, cv: StratifiedGroupKFold, n_jobs: int
+) -> GridSearchCV | RandomizedSearchCV:
     """
     The search of a model, ready to fit: a grid or a random one, as its search space says.
     The refit function applies the tie rule.
@@ -138,6 +127,7 @@ def _build_search(model_name: str, cv: StratifiedGroupKFold) -> GridSearchCV | R
     options = {
         "scoring": make_scorer(METRIC_FUNCTIONS[TUNING_METRIC]),
         "cv": cv,
+        "n_jobs": n_jobs,
         "refit": lambda cv_results: _pick_best(model_name, cv_results),
     }
     if spec["kind"] == "grid":

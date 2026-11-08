@@ -67,18 +67,6 @@ class TestSaveBestParams:
         with pytest.raises(TypeError, match="not JSON serializable"):
             save_best_params({"p/n/0": {"m": {"x": object()}}}, tmp_path / "best_params.json")
 
-    def test_what_tune_all_returns_can_be_saved(self, city_df, monkeypatch, tmp_path):
-        spaces = {
-            "logistic_regression": {
-                "kind": "grid",
-                "space": [{"C": [0.1, 10], "penalty": ["l2"], "solver": ["lbfgs"]}],
-            }
-        }
-        monkeypatch.setattr(tuning, "SEARCH_SPACES", spaces)
-        best, _ = tuning.tune_all(city_df, [build_all_splits(city_df)[10]])  # a cross_city partition
-        path = save_best_params(best, tmp_path / "best_params.json")
-        assert json.loads(path.read_text()) == best
-
 
 class TestSaveCandidates:
     def test_has_every_candidate_and_no_index_column(self, candidates, tmp_path):

@@ -10,7 +10,7 @@ from urban_accessibility_ml.modeling.tuning.tuning_constants import (
     SEARCH_SPACES,
     TUNING_N_CANDIDATES,
 )
-from urban_accessibility_ml.modeling.tuning.tuning_search import _pick_best, tune_all, tune_model, tune_partition
+from urban_accessibility_ml.modeling.tuning.tuning_search import _pick_best, tune_model, tune_partition
 from urban_accessibility_ml.preprocessing.split import Split, build_all_splits
 
 N_ROWS_PER_CLASS = {0: 60, 1: 45, 2: 15}  # C, B, A: imbalanced like the real data
@@ -450,7 +450,7 @@ class TestTunePartition:
         split = build_all_splits(city_df)[0]
         seen = []
 
-        def spy(model_name, X_train, y_train, groups_train):
+        def spy(model_name, X_train, y_train, groups_train, n_jobs=1):
             seen.append(set(X_train.index))
             return fake_table()  # what matters here is the rows it receives, not the fit
 
@@ -468,17 +468,18 @@ class TestTunePartition:
         changed.loc[test_rows, "puntuacion_pendiente_global"] = 99.0  # ...and one test input
         assert tune_partition(city_df, split, "completo")[0] == tune_partition(changed, split, "completo")[0]
 
-    def test_uses_only_the_dimensions_of_the_feature_set(self, city_df, tiny_all, monkeypatch):
+    def test_uses_only_the_dimensions_of_the_feature_set_and_passes_n_jobs(self, city_df, tiny_all, monkeypatch):
         split = build_all_splits(city_df)[0]
         seen = []
 
-        def spy(model_name, X_train, y_train, groups_train):
-            seen.append(list(X_train.columns))
+        def spy(model_name, X_train, y_train, groups_train, n_jobs=1):
+            seen.append((list(X_train.columns), n_jobs))
             return fake_table()
 
         monkeypatch.setattr(tuning, "tune_model", spy)
-        tune_partition(city_df, split, "cartografico_aereo")
-        assert seen[0] == ["puntuacion_cruces_global", "puntuacion_mobiliario_global"]
+        tune_partition(city_df, split, "cartografico_aereo", n_jobs=2)
+        columns = ["puntuacion_cruces_global", "puntuacion_mobiliario_global"]
+        assert seen[0] == (columns, 2)  # only those dimensions, and the n_jobs reaches the model
 
     def test_returns_params_and_candidates_of_every_model(self, city_df, tiny_all):
         split = build_all_splits(city_df)[0]
@@ -490,59 +491,3 @@ class TestTunePartition:
             {"strategy": split.strategy, "name": split.name, "fold": split.fold}
         ]
         assert candidates.groupby("model")["selected"].sum().eq(1).all()  # one selected per model
-
-
-class TestTuneAll:
-    @pytest.fixture
-    def splits(self, city_df):
-        all_splits = build_all_splits(city_df)
-        return [all_splits[0], all_splits[10]]  # within_city Albacete 0, and a cross_city one
-
-    @pytest.fixture
-    def fake_partition(self, monkeypatch):
-        """tune_partition without fitting: it records the dataframe it receives for each split."""
-        received = []
-
-        def fake(df, split, feature_set):
-            received.append((df, split.key))
-            best, table = fake_table()
-            return {"logistic_regression": {"C": 1}}, table.assign(name=split.name)
-
-        monkeypatch.setattr(tuning, "tune_partition", fake)
-        return received
-
-    def test_result_has_every_partition_with_every_model_and_candidate(
-        self, city_df, tiny_all, splits
-    ):
-        best, candidates = tune_all(city_df, splits)
-        assert list(best) == [s.key for s in splits]
-        assert any(k.startswith("cross_city/") and "->" in k for k in best)
-        assert all(list(models) == list(tiny_all) for models in best.values())
-        pairs = candidates[["strategy", "name", "fold", "model"]].drop_duplicates()
-        assert len(pairs) == len(splits) * len(tiny_all)
-
-    def test_calls_tune_partition_once_per_partition(self, city_df, splits, fake_partition):
-        tune_all(city_df, splits)
-        assert [key for _, key in fake_partition] == [s.key for s in splits]
-
-    def test_gives_tune_partition_the_dataframe_indexed_by_key_tramo(
-        self, city_df, splits, fake_partition
-    ):
-        tune_all(city_df.reset_index(drop=True), splits)  # key_tramo only as a column
-        assert all(df.index.name == "key_tramo" for df, _ in fake_partition)
-
-    def test_joins_the_tables_of_all_the_partitions(self, city_df, splits, fake_partition):
-        _, candidates = tune_all(city_df, splits)
-        assert list(candidates["name"]) == [s.name for s in splits]
-
-    def test_does_not_modify_the_dataframe(self, city_df, splits, fake_partition):
-        plain = city_df.reset_index(drop=True)
-        before = plain.copy()
-        tune_all(plain, splits)
-        pd.testing.assert_frame_equal(plain, before)
-
-    def test_is_reproducible(self, city_df, tiny_all, splits):
-        first = tune_all(city_df, splits[:1])
-        second = tune_all(city_df, splits[:1])
-        assert first[0] == second[0]
-        pd.testing.assert_frame_equal(first[1], second[1])

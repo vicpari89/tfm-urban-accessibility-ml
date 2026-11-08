@@ -1,6 +1,6 @@
 """Write and read the results of the tuning (tuning_search.py).
 
-tuning_search.tune_all -> save_best_params (JSON) and save_candidates (CSV)
+tuning_run.run_tuning -> save_tuning -> best_params (JSON) and candidates (CSV)
 load_best_params (JSON) -> train.run_one and experiments.run_experiments
 """
 
@@ -44,7 +44,7 @@ def save_candidates(candidates: pd.DataFrame, path: str | Path) -> Path:
     Write all the candidates evaluated to a CSV, without the index column. The params of each
     candidate are written as a JSON text.
 
-    :param candidates: the second result of tune_all.
+    :param candidates: the candidates of the tuning.
     :param path: CSV file to write. Its folders are created if they do not exist.
     :return: the path written.
     """
@@ -68,11 +68,8 @@ def save_tuning(
     candidates_path: str | Path,
 ) -> None:
     """
-    Add the result of one (partition, feature set) to the two files, keeping the previous content.
-    The candidates are saved first and then best_params.
-
-    :param best_params: {model: params}, first result of tune_partition.
-    :param candidates: second result of tune_partition.
+    Add the result of one (partition, feature set) to the two files. The best params are written
+    last: a tuning counts as done (is_tuned) only when they are there.
     """
     best_params_path, candidates_path = Path(best_params_path), Path(candidates_path)
     unit = ["strategy", "name", "fold", "feature_set"]
