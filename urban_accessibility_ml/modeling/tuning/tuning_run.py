@@ -42,7 +42,15 @@ CANDIDATES_FILE = REPORTS_DIR / "results" / "tuning-candidates.csv"
 DEFAULT_N_JOBS = max(1, (os.cpu_count() or 2) // 2)  # half of the cores, for 16 GB of RAM
 
 
-def estimate_seconds(indexed: pd.DataFrame, splits: list, saved: dict, n_jobs: int) -> float:
+def estimate_seconds(
+    indexed: pd.DataFrame,
+    splits: list,
+    saved: dict,
+    n_jobs: int,
+    models: list[str],
+    seed: int | None = None,
+    n_candidates: int | None = None,
+) -> float:
     """
     Estimated seconds left, from timing the models on the biggest partition and dividing by n_jobs.
     """
@@ -50,17 +58,17 @@ def estimate_seconds(indexed: pd.DataFrame, splits: list, saved: dict, n_jobs: i
         tuning_key(s, fs, "")
         for fs in TUNING_FEATURE_SET_ORDER
         for s in splits
-        if not is_tuned(saved, s, fs, SEARCH_SPACES)
+        if not is_tuned(saved, s, fs, models)
     }
     if not pending:
         return 0.0
     biggest = max(splits, key=lambda s: len(s.train_ids))
     data = train_data(indexed, biggest, TUNING_FEATURE_SET)
     per_unit = 0.0
-    for model_name in SEARCH_SPACES:
-        seconds, n_candidates = time_candidate(model_name, *data, n_jobs)
-        logger.info(f"{model_name}: {seconds:.1f} s per candidate, {n_candidates} candidates")
-        per_unit += seconds * n_candidates
+    for model_name in models:
+        seconds, total = time_candidate(model_name, *data, n_jobs, seed, n_candidates)
+        logger.info(f"{model_name}: {seconds:.1f} s per candidate, {total} candidates")
+        per_unit += seconds * total
     return per_unit * len(pending) / n_jobs
 
 
@@ -71,6 +79,9 @@ def run_tuning(
     overwrite: bool = False,
     n_jobs: int = DEFAULT_N_JOBS,
     dry_run: bool = False,
+    seed: int | None = None,
+    n_candidates: int | None = None,
+    models: list[str] | None = None,
 ) -> None:
     """
     Tune every model in every partition and feature set, in TUNING_FEATURE_SET_ORDER. Each result
@@ -79,6 +90,9 @@ def run_tuning(
     :param df: unified dataset.
     :param overwrite: delete the two files first and start from scratch.
     :param n_jobs: number of parallel runs.
+    :param seed: seed of the inner folds and the random search. By default config.SEED.
+    :param n_candidates: candidates of a random search. By default TUNING_N_CANDIDATES.
+    :param models: models to tune. By default all of SEARCH_SPACES.
     """
     # saga does not converge in some candidates; it is not an error (sklearn sends it to the workers)
     warnings.filterwarnings("ignore", category=ConvergenceWarning)
@@ -86,18 +100,21 @@ def run_tuning(
         for path in (best_params_path, candidates_path):
             path.unlink(missing_ok=True)
 
+    models = list(SEARCH_SPACES) if models is None else models
     indexed, splits = _index_by_key(df), build_all_splits(df)
     saved = load_best_params(best_params_path) if best_params_path.exists() else {}
-    seconds = estimate_seconds(indexed, splits, saved, n_jobs)
+    seconds = estimate_seconds(indexed, splits, saved, n_jobs, models, seed, n_candidates)
     logger.info(f"Estimated time left: {seconds / 60:.0f} min")
     if dry_run:
         return
     for feature_set in TUNING_FEATURE_SET_ORDER:
         for split in tqdm(splits, desc=feature_set):
             saved = load_best_params(best_params_path) if best_params_path.exists() else {}
-            if is_tuned(saved, split, feature_set, SEARCH_SPACES):
+            if is_tuned(saved, split, feature_set, models):
                 continue
-            best_params, candidates = tune_partition(indexed, split, feature_set, n_jobs)
+            best_params, candidates = tune_partition(
+                indexed, split, feature_set, n_jobs, seed, n_candidates, models
+            )
             save_tuning(
                 split, feature_set, best_params, candidates, best_params_path, candidates_path
             )

@@ -56,6 +56,8 @@ def tune_model(
     y_train: pd.Series,
     groups_train: pd.Series,
     n_jobs: int = 1,
+    seed: int | None = None,
+    n_candidates: int | None = None,
 ) -> tuple[dict, pd.DataFrame]:
     """
     Choose the best hyperparameters of one model, using only the train rows of one partition.
@@ -65,6 +67,8 @@ def tune_model(
     :param y_train: encoded classes of the train rows.
     :param groups_train: street of each train row, to keep a street in a single inner fold.
     :param n_jobs: number of parallel runs.
+    :param seed: seed of the inner folds and of the random search. By default config.SEED.
+    :param n_candidates: candidates of a random search. By default TUNING_N_CANDIDATES.
     :return: (best_params, candidates). candidates has one row per candidate, with its params, the
         mean and std of the metric over the inner folds, and selected (True for the best one).
         Candidates within TUNING_TIE_TOLERANCE of the best mean are tied: the simplest wins.
@@ -74,10 +78,11 @@ def tune_model(
         raise ValueError(f"No search space for: {model_name}. Options: {list(SEARCH_SPACES)}")
 
     # 1. Inner folds: https://nbviewer.org/github/Yorko/mlcourse.ai/blob/main/jupyter_english/tutorials/nested_cross_validation_tatyana_kudasova.ipynb
-    cv = StratifiedGroupKFold(n_splits=TUNING_INNER_SPLITS, shuffle=True, random_state=SEED)
+    seed = SEED if seed is None else seed
+    cv = StratifiedGroupKFold(n_splits=TUNING_INNER_SPLITS, shuffle=True, random_state=seed)
 
     # 2. Score every candidate on every inner fold
-    search = _build_search(model_name, cv, n_jobs)
+    search = _build_search(model_name, cv, n_jobs, seed, n_candidates)
     search.fit(X_train, y_train, groups=groups_train)
 
     # 3. All the candidates, with the best one marked
@@ -94,7 +99,13 @@ def tune_model(
 
 
 def tune_partition(
-    df: pd.DataFrame, split: Split, feature_set: str, n_jobs: int = 1
+    df: pd.DataFrame,
+    split: Split,
+    feature_set: str,
+    n_jobs: int = 1,
+    seed: int | None = None,
+    n_candidates: int | None = None,
+    models: list[str] | None = None,
 ) -> tuple[dict, pd.DataFrame]:
     """
     Tune every model of SEARCH_SPACES with the TRAIN rows of one partition and feature set.
@@ -104,15 +115,18 @@ def tune_partition(
     :param split: one train/test partition.
     :param feature_set: one of config.FEATURE_SETS.
     :param n_jobs: number of parallel runs.
+    :param seed: see tune_model.
+    :param n_candidates: see tune_model.
+    :param models: models to tune. By default all of SEARCH_SPACES.
     :return: (best_params, candidates). best_params is {model: params}. candidates joins the
         candidates of every model, with the columns strategy, name, fold and model.
     """
     X_train, y_train, groups_train = train_data(df, split, feature_set)
 
     best_params, tables = {}, []
-    for model_name in SEARCH_SPACES:
+    for model_name in SEARCH_SPACES if models is None else models:
         best_params[model_name], table = tune_model(
-            model_name, X_train, y_train, groups_train, n_jobs
+            model_name, X_train, y_train, groups_train, n_jobs, seed, n_candidates
         )
         tables.append(
             table.assign(
@@ -134,17 +148,21 @@ def time_candidate(
     y_train: pd.Series,
     groups_train: pd.Series,
     n_jobs: int = 1,
+    seed: int | None = None,
+    n_candidates: int | None = None,
 ) -> tuple[float, int]:
     """
     Seconds that one candidate takes the inner folds (mean of 3 candidates spread over the
     search space), and the number of candidates of the search.
     """
+    seed = SEED if seed is None else seed
+    n_candidates = TUNING_N_CANDIDATES if n_candidates is None else n_candidates
     spec = SEARCH_SPACES[model_name]
     if spec["kind"] == "grid":
         candidates = list(ParameterGrid(spec["space"]))
     else:  # the same ones that RandomizedSearchCV samples
-        candidates = list(ParameterSampler(spec["space"], TUNING_N_CANDIDATES, random_state=SEED))
-    cv = StratifiedGroupKFold(n_splits=TUNING_INNER_SPLITS, shuffle=True, random_state=SEED)
+        candidates = list(ParameterSampler(spec["space"], n_candidates, random_state=seed))
+    cv = StratifiedGroupKFold(n_splits=TUNING_INNER_SPLITS, shuffle=True, random_state=seed)
     folds = list(cv.split(X_train, y_train, groups_train))
 
     chosen = candidates[:: max(1, len(candidates) // 3)][:3]
@@ -156,7 +174,11 @@ def time_candidate(
 
 
 def _build_search(
-    model_name: str, cv: StratifiedGroupKFold, n_jobs: int
+    model_name: str,
+    cv: StratifiedGroupKFold,
+    n_jobs: int,
+    seed: int | None = None,
+    n_candidates: int | None = None,
 ) -> GridSearchCV | RandomizedSearchCV:
     """
     The search of a model, ready to fit: a grid or a random one, as its search space says.
@@ -174,8 +196,8 @@ def _build_search(
     return RandomizedSearchCV(
         _estimator(model_name, None, n_jobs),
         spec["space"],
-        n_iter=TUNING_N_CANDIDATES,
-        random_state=SEED,
+        n_iter=TUNING_N_CANDIDATES if n_candidates is None else n_candidates,
+        random_state=SEED if seed is None else seed,
         **options,
     )
 

@@ -23,21 +23,27 @@ from urban_accessibility_ml.preprocessing.split import build_all_splits
 @pytest.fixture
 def fake_partition(monkeypatch):
     """tune_partition replaced by a fast fake that records (partition, feature set, n_jobs)."""
-    calls = []
+    class Calls(list):
+        extra = []  # (seed, n_candidates, models) of each call
 
-    def fake(df, split, feature_set, n_jobs=1):
+    calls = Calls()
+    calls.extra = []
+
+    def fake(df, split, feature_set, n_jobs=1, seed=None, n_candidates=None, models=None):
         calls.append((split.key, feature_set, n_jobs))
+        calls.extra.append((seed, n_candidates, models))
+        models = list(SEARCH_SPACES) if models is None else models
         table = pd.DataFrame(
             {
                 "strategy": split.strategy,
                 "name": split.name,
                 "fold": split.fold,
-                "model": list(SEARCH_SPACES),
-                "params": [{"C": 1}] * len(SEARCH_SPACES),
+                "model": models,
+                "params": [{"C": 1}] * len(models),
                 "selected": True,
             }
         )
-        return {m: {"C": 1} for m in SEARCH_SPACES}, table
+        return {m: {"C": 1} for m in models}, table
 
     monkeypatch.setattr(tuning_run, "tune_partition", fake)
     monkeypatch.setattr(tuning_run, "time_candidate", lambda *a: (2.0, 10))
@@ -74,10 +80,10 @@ class TestRunTuning:
     def test_continues_where_a_stopped_run_was(self, city_df, fake_partition, files, monkeypatch):
         real = tuning_run.tune_partition
 
-        def stop_at_the_fourth(df, split, feature_set, n_jobs=1):
+        def stop_at_the_fourth(*args):
             if len(fake_partition) == 3:
                 raise KeyboardInterrupt
-            return real(df, split, feature_set, n_jobs)
+            return real(*args)
 
         monkeypatch.setattr(tuning_run, "tune_partition", stop_at_the_fourth)
         with pytest.raises(KeyboardInterrupt):
@@ -107,13 +113,15 @@ class TestRunTuning:
         splits = build_all_splits(city_df)
         indexed = tuning_run._index_by_key(city_df)
         per_unit = 2.0 * 10 * len(SEARCH_SPACES)
-        assert estimate_seconds(indexed, splits, {}, 2) == per_unit * 3 * len(splits) / 2
+        assert estimate_seconds(indexed, splits, {}, 2, list(SEARCH_SPACES)) == per_unit * 3 * len(splits) / 2
 
     def test_estimate_is_zero_when_everything_is_tuned(self, city_df, fake_partition, files):
         run_tuning(city_df, *files)
         splits = build_all_splits(city_df)
         indexed = tuning_run._index_by_key(city_df)
-        assert estimate_seconds(indexed, splits, load_best_params(files[0]), 2) == 0.0
+        assert estimate_seconds(
+            indexed, splits, load_best_params(files[0]), 2, list(SEARCH_SPACES)
+        ) == 0.0
 
     def test_dry_run_estimates_but_tunes_and_writes_nothing(self, city_df, fake_partition, files):
         run_tuning(city_df, *files, dry_run=True)
@@ -125,6 +133,16 @@ class TestRunTuning:
         with warnings.catch_warnings(record=True) as caught:
             warnings.warn("did not converge", ConvergenceWarning)
         assert caught == []
+
+    def test_passes_seed_candidates_and_models_and_only_tunes_those_models(
+        self, city_df, fake_partition, files
+    ):
+        run_tuning(city_df, *files, seed=7, n_candidates=5, models=["lightgbm"])
+        assert fake_partition.extra and all(e == (7, 5, ["lightgbm"]) for e in fake_partition.extra)
+        assert set(k.split("|")[2] for k in load_best_params(files[0])) == {"lightgbm"}
+        fake_partition.clear()
+        run_tuning(city_df, *files, models=["lightgbm"])
+        assert fake_partition == []  # the saved lightgbm tunings count as done
 
     def test_passes_n_jobs(self, city_df, fake_partition, files):
         run_tuning(city_df, *files, n_jobs=3)

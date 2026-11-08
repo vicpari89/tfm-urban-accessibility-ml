@@ -126,6 +126,37 @@ class TestTuneModel:
         assert all(g is not None and (np.asarray(g) == groups.to_numpy()).all() for g in split_groups)
 
 
+class TestSeedAndCandidates:
+    @pytest.mark.usefixtures("small_lr")
+    def test_the_seed_goes_to_the_inner_folds(self, data, monkeypatch):
+        X, y, groups = data
+        created = []
+
+        class Recorder(StratifiedGroupKFold):
+            def __init__(self, **kwargs):
+                created.append(kwargs)
+                super().__init__(**kwargs)
+
+        monkeypatch.setattr(tuning, "StratifiedGroupKFold", Recorder)
+        tune_model("logistic_regression", X, y, groups, seed=7)
+        assert created[0]["random_state"] == 7
+
+    def test_a_random_search_uses_the_seed_and_the_number_of_candidates(self):
+        cv = StratifiedGroupKFold(n_splits=3)
+        search = tuning._build_search("random_forest", cv, 1, seed=5, n_candidates=7)
+        assert (search.random_state, search.n_iter) == (5, 7)
+
+    def test_by_default_it_is_the_project_seed_and_tuning_n_candidates(self):
+        cv = StratifiedGroupKFold(n_splits=3)
+        search = tuning._build_search("random_forest", cv, 1)
+        assert (search.random_state, search.n_iter) == (SEED, TUNING_N_CANDIDATES)
+
+    def test_another_seed_samples_other_candidates(self, data):
+        X, y, groups = data
+        first = [time_candidate("random_forest", X, y, groups, 1, seed, 4)[1] for seed in (1, 2)]
+        assert first == [4, 4]  # the number of candidates follows n_candidates
+
+
 class TestPickBest:
     @staticmethod
     def results(*scores_and_params):
@@ -450,7 +481,7 @@ class TestTunePartition:
         split = build_all_splits(city_df)[0]
         seen = []
 
-        def spy(model_name, X_train, y_train, groups_train, n_jobs=1):
+        def spy(model_name, X_train, y_train, groups_train, n_jobs=1, seed=None, n_candidates=None):
             seen.append(set(X_train.index))
             return fake_table()  # what matters here is the rows it receives, not the fit
 
@@ -472,7 +503,7 @@ class TestTunePartition:
         split = build_all_splits(city_df)[0]
         seen = []
 
-        def spy(model_name, X_train, y_train, groups_train, n_jobs=1):
+        def spy(model_name, X_train, y_train, groups_train, n_jobs=1, seed=None, n_candidates=None):
             seen.append((list(X_train.columns), n_jobs))
             return fake_table()
 
@@ -480,6 +511,12 @@ class TestTunePartition:
         tune_partition(city_df, split, "cartografico_aereo", n_jobs=2)
         columns = ["puntuacion_cruces_global", "puntuacion_mobiliario_global"]
         assert seen[0] == (columns, 2)  # only those dimensions, and the n_jobs reaches the model
+
+    def test_tunes_only_the_models_asked_for(self, city_df, tiny_all):
+        split = build_all_splits(city_df)[0]
+        best, candidates = tune_partition(city_df, split, "completo", models=["logistic_regression"])
+        assert list(best) == ["logistic_regression"]
+        assert set(candidates["model"]) == {"logistic_regression"}
 
     def test_returns_params_and_candidates_of_every_model(self, city_df, tiny_all):
         split = build_all_splits(city_df)[0]
