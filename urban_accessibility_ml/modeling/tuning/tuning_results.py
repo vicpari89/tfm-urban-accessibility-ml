@@ -10,6 +10,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from urban_accessibility_ml.preprocessing.features import dimensions_for
+from urban_accessibility_ml.preprocessing.split import Split
+
 
 def save_best_params(best_params: dict, path: str | Path) -> Path:
     """
@@ -59,3 +62,13 @@ def _to_python(value):
     if isinstance(value, np.generic):
         return value.item()
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
+def tuning_key(split: Split, feature_set: str, model: str) -> str:
+    """
+    Key of a tuning in best_params.json, e.g. "within_city/Albacete/0|cruces,mobiliario|lightgbm".
+    It uses the dimensions of the feature set, not its name: sets with the same dimensions share
+    the tuning.
+    """
+    dimensions = ",".join(sorted(dimensions_for(feature_set)))
+    return f"{split.key}|{dimensions}|{model}"

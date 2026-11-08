@@ -9,8 +9,9 @@ from urban_accessibility_ml.modeling.tuning.tuning_results import (
     load_best_params,
     save_best_params,
     save_candidates,
+    tuning_key,
 )
-from urban_accessibility_ml.preprocessing.split import build_all_splits
+from urban_accessibility_ml.preprocessing.split import Split, build_all_splits
 
 BEST = {
     "within_city/Albacete/0": {"random_forest": {"max_depth": None, "max_features": 0.5}},
@@ -95,3 +96,27 @@ class TestSaveCandidates:
         before = candidates.copy()
         save_candidates(candidates, tmp_path / "candidates.csv")
         pd.testing.assert_frame_equal(candidates, before)
+
+
+class TestTuningKey:
+    split = Split("within_city", "Albacete", 0, np.array([]), np.array([]))
+
+    def test_calle_and_combinado_share_the_key(self):
+        assert tuning_key(self.split, "calle", "lightgbm") == tuning_key(
+            self.split, "combinado", "lightgbm"
+        )
+
+    def test_different_dimensions_or_model_or_split_differ(self):
+        keys = {
+            tuning_key(self.split, "completo", "lightgbm"),
+            tuning_key(self.split, "calle", "lightgbm"),
+            tuning_key(self.split, "calle", "random_forest"),
+            tuning_key(Split("within_city", "Albacete", 1, np.array([]), np.array([])), "calle", "lightgbm"),
+        }
+        assert len(keys) == 4
+
+    def test_format(self):
+        assert (
+            tuning_key(self.split, "cartografico_aereo", "random_forest")
+            == "within_city/Albacete/0|cruces,mobiliario|random_forest"
+        )
