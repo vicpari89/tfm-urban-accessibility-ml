@@ -10,7 +10,7 @@ from urban_accessibility_ml.modeling.tuning.tuning_constants import (
     SEARCH_SPACES,
     TUNING_N_CANDIDATES,
 )
-from urban_accessibility_ml.modeling.tuning.tuning_search import _pick_best, tune_model, tune_partition
+from urban_accessibility_ml.modeling.tuning.tuning_search import _pick_best, time_candidate, tune_model, tune_partition
 from urban_accessibility_ml.preprocessing.split import Split, build_all_splits
 
 N_ROWS_PER_CLASS = {0: 60, 1: 45, 2: 15}  # C, B, A: imbalanced like the real data
@@ -491,3 +491,13 @@ class TestTunePartition:
             {"strategy": split.strategy, "name": split.name, "fold": split.fold}
         ]
         assert candidates.groupby("model")["selected"].sum().eq(1).all()  # one selected per model
+
+
+class TestTimeCandidate:
+    def test_returns_positive_seconds_and_the_number_of_candidates(self, data):
+        seconds, n_candidates = time_candidate("logistic_regression", *data)
+        assert seconds > 0
+        assert n_candidates == N_CANDIDATES
+
+    def test_a_random_search_has_tuning_n_candidates(self, data):
+        assert time_candidate("random_forest", *data)[1] == TUNING_N_CANDIDATES

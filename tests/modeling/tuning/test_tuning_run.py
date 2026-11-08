@@ -11,6 +11,7 @@ from urban_accessibility_ml.modeling.tuning.tuning_run import (
     BEST_PARAMS_FILE,
     CANDIDATES_FILE,
     DEFAULT_N_JOBS,
+    estimate_seconds,
     app,
     run_tuning,
 )
@@ -37,6 +38,7 @@ def fake_partition(monkeypatch):
         return {m: {"C": 1} for m in SEARCH_SPACES}, table
 
     monkeypatch.setattr(tuning_run, "tune_partition", fake)
+    monkeypatch.setattr(tuning_run, "time_candidate", lambda *a: (2.0, 10))
     return calls
 
 
@@ -97,6 +99,25 @@ class TestRunTuning:
         run_tuning(city_df, *files, overwrite=True)
         assert len(fake_partition) == 3 * len(build_all_splits(city_df))
 
+    def test_estimate_is_the_time_of_the_pending_tunings_divided_by_n_jobs(
+        self, city_df, fake_partition, files
+    ):
+        splits = build_all_splits(city_df)
+        indexed = tuning_run._index_by_key(city_df)
+        per_unit = 2.0 * 10 * len(SEARCH_SPACES)
+        assert estimate_seconds(indexed, splits, {}, 2) == per_unit * 3 * len(splits) / 2
+
+    def test_estimate_is_zero_when_everything_is_tuned(self, city_df, fake_partition, files):
+        run_tuning(city_df, *files)
+        splits = build_all_splits(city_df)
+        indexed = tuning_run._index_by_key(city_df)
+        assert estimate_seconds(indexed, splits, load_best_params(files[0]), 2) == 0.0
+
+    def test_dry_run_estimates_but_tunes_and_writes_nothing(self, city_df, fake_partition, files):
+        run_tuning(city_df, *files, dry_run=True)
+        assert fake_partition == []
+        assert not files[0].exists()
+
     def test_passes_n_jobs(self, city_df, fake_partition, files):
         run_tuning(city_df, *files, n_jobs=3)
         assert {n for _, _, n in fake_partition} == {3}
@@ -119,21 +140,24 @@ class TestCommand:
         return city_df
 
     @pytest.mark.parametrize(
-        "args, overwrite, n_jobs",
-        [([], False, DEFAULT_N_JOBS), (["--overwrite", "--n-jobs", "2"], True, 2)],
+        "args, overwrite, n_jobs, dry_run",
+        [
+            ([], False, DEFAULT_N_JOBS, False),
+            (["--overwrite", "--n-jobs", "2", "--dry-run"], True, 2, True),
+        ],
     )
     def test_reads_the_dataset_and_passes_the_options(
-        self, dataset, monkeypatch, args, overwrite, n_jobs
+        self, dataset, monkeypatch, args, overwrite, n_jobs, dry_run
     ):
         calls = []
         monkeypatch.setattr(
             tuning_run,
             "run_tuning",
-            lambda df, overwrite, n_jobs: calls.append((len(df), overwrite, n_jobs)),
+            lambda df, overwrite, n_jobs, dry_run: calls.append((len(df), overwrite, n_jobs, dry_run)),
         )
         result = CliRunner().invoke(app, args)
         assert result.exit_code == 0, result.output
-        assert calls == [(len(dataset), overwrite, n_jobs)]
+        assert calls == [(len(dataset), overwrite, n_jobs, dry_run)]
 
     def test_fails_with_exit_code_1_if_the_dataset_is_missing(self, monkeypatch, tmp_path):
         monkeypatch.setattr(tuning_run, "UNIFIED_FILE", tmp_path / "does_not_exist.csv")

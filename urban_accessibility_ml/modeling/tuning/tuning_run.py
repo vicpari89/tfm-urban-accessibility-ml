@@ -17,14 +17,20 @@ from urban_accessibility_ml.data.pipeline import UNIFIED_FILE
 from urban_accessibility_ml.modeling.experiments import _index_by_key
 from urban_accessibility_ml.modeling.tuning.tuning_constants import (
     SEARCH_SPACES,
+    TUNING_FEATURE_SET,
     TUNING_FEATURE_SET_ORDER,
 )
 from urban_accessibility_ml.modeling.tuning.tuning_results import (
     is_tuned,
     load_best_params,
     save_tuning,
+    tuning_key,
 )
-from urban_accessibility_ml.modeling.tuning.tuning_search import tune_partition
+from urban_accessibility_ml.modeling.tuning.tuning_search import (
+    time_candidate,
+    train_data,
+    tune_partition,
+)
 from urban_accessibility_ml.preprocessing.split import build_all_splits
 
 app = typer.Typer(help=__doc__)
@@ -34,12 +40,35 @@ CANDIDATES_FILE = REPORTS_DIR / "results" / "tuning-candidates.csv"
 DEFAULT_N_JOBS = max(1, (os.cpu_count() or 2) // 2)  # half of the cores, for 16 GB of RAM
 
 
+def estimate_seconds(indexed: pd.DataFrame, splits: list, saved: dict, n_jobs: int) -> float:
+    """
+    Estimated seconds left, from timing the models on the biggest partition and dividing by n_jobs.
+    """
+    pending = {  # calle and combinado are the same tuning
+        tuning_key(s, fs, "")
+        for fs in TUNING_FEATURE_SET_ORDER
+        for s in splits
+        if not is_tuned(saved, s, fs, SEARCH_SPACES)
+    }
+    if not pending:
+        return 0.0
+    biggest = max(splits, key=lambda s: len(s.train_ids))
+    data = train_data(indexed, biggest, TUNING_FEATURE_SET)
+    per_unit = 0.0
+    for model_name in SEARCH_SPACES:
+        seconds, n_candidates = time_candidate(model_name, *data)
+        logger.info(f"{model_name}: {seconds:.1f} s per candidate, {n_candidates} candidates")
+        per_unit += seconds * n_candidates
+    return per_unit * len(pending) / n_jobs
+
+
 def run_tuning(
     df: pd.DataFrame,
     best_params_path: Path = BEST_PARAMS_FILE,
     candidates_path: Path = CANDIDATES_FILE,
     overwrite: bool = False,
     n_jobs: int = DEFAULT_N_JOBS,
+    dry_run: bool = False,
 ) -> None:
     """
     Tune every model in every partition and feature set, in TUNING_FEATURE_SET_ORDER. Each result
@@ -54,6 +83,11 @@ def run_tuning(
             path.unlink(missing_ok=True)
 
     indexed, splits = _index_by_key(df), build_all_splits(df)
+    saved = load_best_params(best_params_path) if best_params_path.exists() else {}
+    seconds = estimate_seconds(indexed, splits, saved, n_jobs)
+    logger.info(f"Estimated time left: {seconds / 60:.0f} min")
+    if dry_run:
+        return
     for feature_set in TUNING_FEATURE_SET_ORDER:
         for split in tqdm(splits, desc=feature_set):
             saved = load_best_params(best_params_path) if best_params_path.exists() else {}
@@ -70,10 +104,11 @@ def run_tuning(
 def main(
     overwrite: bool = typer.Option(False, help="Delete the result files and start from scratch."),
     n_jobs: int = typer.Option(DEFAULT_N_JOBS, help="Candidates fitted in parallel."),
+    dry_run: bool = typer.Option(False, help="Only estimate the time left."),
 ) -> None:
     """Tune the models in the 17 partitions and the feature sets. Continues a stopped run."""
     try:
-        run_tuning(pd.read_csv(UNIFIED_FILE), overwrite=overwrite, n_jobs=n_jobs)
+        run_tuning(pd.read_csv(UNIFIED_FILE), overwrite=overwrite, n_jobs=n_jobs, dry_run=dry_run)
     except FileNotFoundError as e:
         logger.error(e)
         raise typer.Exit(code=1)

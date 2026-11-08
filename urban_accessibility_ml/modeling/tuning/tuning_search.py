@@ -9,10 +9,18 @@ The search itself is done with GridSearchCV (kind "grid") or RandomizedSearchCV 
 Settings and search spaces: modeling/tuning/tuning_constants.py.
 """
 
+import time
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import make_scorer
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, StratifiedGroupKFold
+from sklearn.model_selection import (
+    GridSearchCV,
+    ParameterGrid,
+    ParameterSampler,
+    RandomizedSearchCV,
+    StratifiedGroupKFold,
+)
 
 from urban_accessibility_ml.config import SEED
 from urban_accessibility_ml.modeling.evaluate import METRIC_FUNCTIONS
@@ -99,9 +107,7 @@ def tune_partition(
     :return: (best_params, candidates). best_params is {model: params}. candidates joins the
         candidates of every model, with the columns strategy, name, fold and model.
     """
-    X, y = get_xy(df, feature_set, TUNING_PROFILE)
-    X_train, y_train = X.loc[split.train_ids], y.loc[split.train_ids]
-    groups_train = df.loc[split.train_ids, STREET_COL]
+    X_train, y_train, groups_train = train_data(df, split, feature_set)
 
     best_params, tables = {}, []
     for model_name in SEARCH_SPACES:
@@ -114,6 +120,35 @@ def tune_partition(
             )
         )
     return best_params, pd.concat(tables, ignore_index=True)
+
+
+def train_data(df: pd.DataFrame, split: Split, feature_set: str):
+    """X_train, y_train and the street of each train row (df indexed by key_tramo)."""
+    X, y = get_xy(df, feature_set, TUNING_PROFILE)
+    return X.loc[split.train_ids], y.loc[split.train_ids], df.loc[split.train_ids, STREET_COL]
+
+
+def time_candidate(
+    model_name: str, X_train: pd.DataFrame, y_train: pd.Series, groups_train: pd.Series
+) -> tuple[float, int]:
+    """
+    Seconds that one candidate takes the inner folds (mean of 3 candidates spread over the
+    search space), and the number of candidates of the search.
+    """
+    spec = SEARCH_SPACES[model_name]
+    if spec["kind"] == "grid":
+        candidates = list(ParameterGrid(spec["space"]))
+    else:  # the same ones that RandomizedSearchCV samples
+        candidates = list(ParameterSampler(spec["space"], TUNING_N_CANDIDATES, random_state=SEED))
+    cv = StratifiedGroupKFold(n_splits=TUNING_INNER_SPLITS, shuffle=True, random_state=SEED)
+    folds = list(cv.split(X_train, y_train, groups_train))
+
+    chosen = candidates[:: max(1, len(candidates) // 3)][:3]
+    start = time.perf_counter()
+    for params in chosen:
+        for train, _ in folds:
+            build_model(model_name, params=params).fit(X_train.iloc[train], y_train.iloc[train])
+    return (time.perf_counter() - start) / len(chosen), len(candidates)
 
 
 def _build_search(
