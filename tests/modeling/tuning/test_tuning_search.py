@@ -455,7 +455,7 @@ class TestTunePartition:
             return fake_table()  # what matters here is the rows it receives, not the fit
 
         monkeypatch.setattr(tuning, "tune_model", spy)
-        tune_partition(city_df, split)
+        tune_partition(city_df, split, "completo")
         assert len(seen) == len(tiny_all)
         assert all(ids == set(split.train_ids) for ids in seen)
         assert not set(split.test_ids) & set().union(*seen)
@@ -466,11 +466,23 @@ class TestTunePartition:
         test_rows = changed.index.isin(split.test_ids)
         changed.loc[test_rows, "clase_total"] = "C"  # corrupt the test targets...
         changed.loc[test_rows, "puntuacion_pendiente_global"] = 99.0  # ...and one test input
-        assert tune_partition(city_df, split)[0] == tune_partition(changed, split)[0]
+        assert tune_partition(city_df, split, "completo")[0] == tune_partition(changed, split, "completo")[0]
+
+    def test_uses_only_the_dimensions_of_the_feature_set(self, city_df, tiny_all, monkeypatch):
+        split = build_all_splits(city_df)[0]
+        seen = []
+
+        def spy(model_name, X_train, y_train, groups_train):
+            seen.append(list(X_train.columns))
+            return fake_table()
+
+        monkeypatch.setattr(tuning, "tune_model", spy)
+        tune_partition(city_df, split, "cartografico_aereo")
+        assert seen[0] == ["puntuacion_cruces_global", "puntuacion_mobiliario_global"]
 
     def test_returns_params_and_candidates_of_every_model(self, city_df, tiny_all):
         split = build_all_splits(city_df)[0]
-        best, candidates = tune_partition(city_df, split)
+        best, candidates = tune_partition(city_df, split, "completo")
         assert list(best) == list(tiny_all)
         assert set(candidates["model"]) == set(tiny_all)
         keys = ["strategy", "name", "fold"]
@@ -491,7 +503,7 @@ class TestTuneAll:
         """tune_partition without fitting: it records the dataframe it receives for each split."""
         received = []
 
-        def fake(df, split):
+        def fake(df, split, feature_set):
             received.append((df, split.key))
             best, table = fake_table()
             return {"logistic_regression": {"C": 1}}, table.assign(name=split.name)

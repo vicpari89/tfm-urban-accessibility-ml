@@ -86,17 +86,18 @@ def tune_model(
     return search.best_params_, candidates
 
 
-def tune_partition(df: pd.DataFrame, split: Split) -> tuple[dict, pd.DataFrame]:
+def tune_partition(df: pd.DataFrame, split: Split, feature_set: str) -> tuple[dict, pd.DataFrame]:
     """
-    Tune every model of SEARCH_SPACES with the TRAIN rows of one partition. The test rows are
-    never read.
+    Tune every model of SEARCH_SPACES with the TRAIN rows of one partition and one feature set
+    (with the TUNING_PROFILE as reference). The test rows are never read.
 
     :param df: unified dataset, indexed by key_tramo.
     :param split: one train/test partition.
+    :param feature_set: one of config.FEATURE_SETS.
     :return: (best_params, candidates). best_params is {model: params}. candidates joins the
         candidates of every model, with the columns strategy, name, fold and model.
     """
-    X, y = get_xy(df, TUNING_FEATURE_SET, TUNING_PROFILE)
+    X, y = get_xy(df, feature_set, TUNING_PROFILE)
     X_train, y_train = X.loc[split.train_ids], y.loc[split.train_ids]
     groups_train = df.loc[split.train_ids, STREET_COL]
 
@@ -123,7 +124,7 @@ def tune_all(df: pd.DataFrame, splits: list[Split]) -> tuple[dict, pd.DataFrame]
     indexed = _index_by_key(df)
     best_params, tables = {}, []
     for split in tqdm(splits, desc="tuning"):
-        best_params[split.key], table = tune_partition(indexed, split)
+        best_params[split.key], table = tune_partition(indexed, split, TUNING_FEATURE_SET)
         tables.append(table)
     return best_params, pd.concat(tables, ignore_index=True)
 
