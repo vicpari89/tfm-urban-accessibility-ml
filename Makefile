@@ -74,7 +74,7 @@ unified: requirements
 	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.data.dataset --notebooks
 
 
-## Tune the hyperparameters in the 17 partitions (about 30 min) and write reports/results/best_params.json
+## Tune the hyperparameters in the 17 partitions and the feature sets (resumable) and write reports/results/best_params.json
 .PHONY: tune
 tune: requirements
 	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.modeling.tuning.tuning_run

@@ -57,10 +57,10 @@ The models, the tuning and the experiment matrix are in `urban_accessibility_ml/
 
 | Command | What it does |
 |---|---|
-| `make tune` | Tunes the hyperparameters of logistic regression, random forest, XGBoost and LightGBM in each of the 17 partitions, using only their training rows (about 45 minutes). Writes `reports/results/best_params.json` and `reports/results/tuning-candidates.csv`. |
+| `make tune` | Tunes the hyperparameters of logistic regression, random forest, XGBoost and LightGBM in each of the 17 partitions and each feature set (`calle` and `combinado` share it), using only their training rows. It saves each result when it ends and continues a stopped run. Writes `reports/results/best_params.json` and `reports/results/tuning-candidates.csv`. |
 | `make experiments` | Runs the experiment matrix (5 models × 4 feature sets × 4 profiles × 17 partitions) twice, with the default and with the tuned hyperparameters (about 8 minutes). Writes `reports/results/experiment-matrix-default.csv` and `reports/results/experiment-matrix-tuned.csv`. |
 
-Both commands stop before running if their result files already exist. To write over them, run the module with `--overwrite`, for example `uv run python -m urban_accessibility_ml.modeling.experiments_run --overwrite`. The results are committed, so the notebooks below can read them without running anything long.
+`make experiments` stops before running if its result files already exist; to write over them, run the module with `--overwrite`, for example `uv run python -m urban_accessibility_ml.modeling.experiments_run --overwrite`. `make tune` skips what is already in `best_params.json`; run `uv run python -m urban_accessibility_ml.modeling.tuning.tuning_run` with `--overwrite` to start from scratch, `--n-jobs` to set the parallel fits (half of the cores by default) or `--dry-run` to only estimate the time left. The results are committed, so the notebooks below can read them without running anything long.
 
 | Notebook | Content |
 |---|---|
