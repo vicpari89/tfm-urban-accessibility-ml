@@ -14,6 +14,8 @@ from sklearn.base import BaseEstimator
 
 from urban_accessibility_ml.modeling.evaluate import evaluate
 from urban_accessibility_ml.modeling.models import build_model
+from urban_accessibility_ml.modeling.tuning.tuning_constants import SEARCH_SPACES
+from urban_accessibility_ml.modeling.tuning.tuning_results import tuning_key
 from urban_accessibility_ml.preprocessing.features import get_xy
 from urban_accessibility_ml.preprocessing.split import Split
 
@@ -34,8 +36,7 @@ def run_one(
     :param feature_set: which dimensions set use: one of config.FEATURE_SETS.
     :param profile: which profile: one of config.PROFILES.
     :param model_name: model to train: one of the keys of modeling.models.BUILDERS.
-    :param hyperparameters: {Split.key: {model: params}}, for example the result of the tuning
-        (modeling/tuning). The ones of this split and model are used. None: the model defaults.
+    :param hyperparameters: {tuning_key: params} (best_params.json). None: the model defaults.
     :return: one result row, a dict with the experiment (strategy, name, fold, feature_set,
         profile, model), the size of each set (n_train, n_test) and one value per metric of
         config.METRICS.
@@ -48,7 +49,7 @@ def run_one(
     X_test, y_test = X.loc[split.test_ids], y.loc[split.test_ids]
 
     # 3. Train
-    model = _train(model_name, X_train, y_train, _params_for(hyperparameters, split, model_name))
+    model = _train(model_name, X_train, y_train, _params_for(hyperparameters, split, feature_set, model_name))
 
     # 4. Predict
     y_pred = model.predict(X_test)
@@ -70,18 +71,21 @@ def run_one(
     }
 
 
-def _params_for(hyperparameters: dict | None, split: Split, model_name: str) -> dict | None:
+def _params_for(
+    hyperparameters: dict | None, split: Split, feature_set: str, model_name: str
+) -> dict | None:
     """
-    The hyperparameters of a model in a split.
+    The tuned hyperparameters of a model in a split and feature set.
 
-    :return: None if there are no hyperparameters, or if the model was not tuned (dummy).
-    :raises KeyError: if hyperparameters has no entry for the split.
+    :return: None if there are no hyperparameters or the model is not tuned (dummy).
+    :raises KeyError: if a tuned model has no entry.
     """
-    if hyperparameters is None:
+    if hyperparameters is None or model_name not in SEARCH_SPACES:
         return None
-    if split.key not in hyperparameters:
-        raise KeyError(f"No hyperparameters for the partition {split.key}")
-    return hyperparameters[split.key].get(model_name)
+    key = tuning_key(split, feature_set, model_name)
+    if key not in hyperparameters:
+        raise KeyError(f"No hyperparameters for {key}")
+    return hyperparameters[key]
 
 
 def _train(

@@ -31,8 +31,7 @@ def run_experiments(
     :param feature_sets: feature sets to combine. By default config.FEATURE_SETS.
     :param profiles: profiles to combine. By default config.PROFILES.
     :param model_names: models to combine. By default config.MATRIX_MODELS.
-    :param hyperparameters: {Split.key: {model: params}}, for example the result of the tuning
-        (modeling/tuning). Each run uses the ones of its split and model. None: the model defaults.
+    :param hyperparameters: {tuning_key: params} (best_params.json). None: the model defaults.
     :return: one row per model and fold.
     :raises ValueError: if a feature set, a profile or a model does not exist.
     """

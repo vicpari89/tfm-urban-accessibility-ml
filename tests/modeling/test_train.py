@@ -6,6 +6,7 @@ from urban_accessibility_ml.config import DIMENSIONS, METRICS, PROFILES, TARGET_
 from urban_accessibility_ml.modeling import train
 from urban_accessibility_ml.modeling.models import model_xgboost_balanced
 from urban_accessibility_ml.modeling.train import run_one
+from urban_accessibility_ml.modeling.tuning.tuning_results import tuning_key
 from urban_accessibility_ml.preprocessing.split import Split
 
 N_ROWS = 60
@@ -89,7 +90,11 @@ def test_run_one_does_not_compute_weights_for_the_other_models(df, monkeypatch, 
     run_one(df, SPLIT, FEATURE_SET, PROFILE, model_name)
 
 
-OTHER_SPLIT_KEY = "within_city/Algeciras/0"
+OTHER_SPLIT = Split("within_city", "Algeciras", 0, TRAIN_IDS, TEST_IDS)
+
+
+def key(model, split=SPLIT, feature_set=FEATURE_SET):
+    return tuning_key(split, feature_set, model)
 
 
 def spy_on_build_model(monkeypatch):
@@ -114,28 +119,44 @@ def test_run_one_without_hyperparameters_builds_the_default_model(df, monkeypatc
 def test_run_one_uses_the_params_of_its_partition_and_model(df, monkeypatch):
     received = spy_on_build_model(monkeypatch)
     hyperparameters = {
-        SPLIT.key: {"logistic_regression": {"C": 0.1}, "random_forest": {"max_depth": 3}},
-        OTHER_SPLIT_KEY: {"logistic_regression": {"C": 99}},
+        key("logistic_regression"): {"C": 0.1},
+        key("random_forest"): {"max_depth": 3},
+        key("logistic_regression", OTHER_SPLIT): {"C": 99},
     }
     run_one(df, SPLIT, FEATURE_SET, PROFILE, "logistic_regression", hyperparameters)
     assert received == [{"C": 0.1}]  # not the 99 of the other partition, not the forest ones
 
 
+@pytest.mark.parametrize("profile", PROFILES)
+def test_run_one_reuses_the_same_params_in_every_profile(df, monkeypatch, profile):
+    received = spy_on_build_model(monkeypatch)
+    hyperparameters = {key("logistic_regression"): {"C": 0.1}}
+    run_one(df, SPLIT, FEATURE_SET, profile, "logistic_regression", hyperparameters)
+    assert received == [{"C": 0.1}]
+
+
+def test_run_one_combinado_uses_the_params_tuned_for_calle(df, monkeypatch):
+    received = spy_on_build_model(monkeypatch)
+    hyperparameters = {key("logistic_regression", feature_set="calle"): {"C": 0.1}}
+    run_one(df, SPLIT, "combinado", PROFILE, "logistic_regression", hyperparameters)
+    assert received == [{"C": 0.1}]
+
+
 def test_run_one_model_without_params_uses_the_defaults(df, monkeypatch):
     received = spy_on_build_model(monkeypatch)
-    hyperparameters = {SPLIT.key: {"logistic_regression": {"C": 0.1}}}
+    hyperparameters = {key("logistic_regression"): {"C": 0.1}}
     run_one(df, SPLIT, FEATURE_SET, PROFILE, "dummy", hyperparameters)  # the dummy is not tuned
     assert received == [None]
 
 
-def test_run_one_partition_missing_from_hyperparameters_fails(df):
-    hyperparameters = {OTHER_SPLIT_KEY: {"logistic_regression": {"C": 0.1}}}
+def test_run_one_missing_tuning_fails(df):
+    hyperparameters = {key("logistic_regression", OTHER_SPLIT): {"C": 0.1}}
     with pytest.raises(KeyError, match="within_city/Albacete/2"):
         run_one(df, SPLIT, FEATURE_SET, PROFILE, "logistic_regression", hyperparameters)
 
 
 def test_run_one_params_the_model_does_not_accept_fail(df):
-    hyperparameters = {SPLIT.key: {"logistic_regression": {"max_depth": 3}}}
+    hyperparameters = {key("logistic_regression"): {"max_depth": 3}}
     with pytest.raises(TypeError):
         run_one(df, SPLIT, FEATURE_SET, PROFILE, "logistic_regression", hyperparameters)
 
@@ -150,7 +171,7 @@ def test_run_one_params_the_model_does_not_accept_fail(df):
     ],
 )
 def test_run_one_trains_every_tuned_model_with_its_params(df, model_name, params):
-    row = run_one(df, SPLIT, FEATURE_SET, PROFILE, model_name, {SPLIT.key: {model_name: params}})
+    row = run_one(df, SPLIT, FEATURE_SET, PROFILE, model_name, {key(model_name): params})
     assert row["model"] == model_name
     assert 0 <= row["f1_macro"] <= 1
 
