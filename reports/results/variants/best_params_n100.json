@@ -1,0 +1,1073 @@
+{
+  "within_city/Albacete/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.61534947637868,
+    "min_samples_leaf": 2
+  },
+  "within_city/Albacete/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.8603553891795411,
+    "learning_rate": 0.012115092723815248,
+    "min_child_samples": 12,
+    "n_estimators": 393,
+    "num_leaves": 8,
+    "subsample": 0.6727299868828402
+  },
+  "within_city/Albacete/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.7558472344876814,
+    "learning_rate": 0.027519671307500715,
+    "max_depth": 4,
+    "min_child_weight": 1,
+    "n_estimators": 199,
+    "subsample": 0.6043350605921193
+  },
+  "within_city/Albacete/1|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.959541228979397,
+    "min_samples_leaf": 2
+  },
+  "within_city/Albacete/1|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7043574493366855,
+    "learning_rate": 0.01053432376004981,
+    "min_child_samples": 7,
+    "n_estimators": 195,
+    "num_leaves": 7,
+    "subsample": 0.815750979360025
+  },
+  "within_city/Albacete/1|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8288016796836732,
+    "learning_rate": 0.1365360925717325,
+    "max_depth": 2,
+    "min_child_weight": 5,
+    "n_estimators": 105,
+    "subsample": 0.7480634801021777
+  },
+  "within_city/Albacete/2|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.31702117650201767,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/2|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7043574493366855,
+    "learning_rate": 0.01053432376004981,
+    "min_child_samples": 7,
+    "n_estimators": 195,
+    "num_leaves": 7,
+    "subsample": 0.815750979360025
+  },
+  "within_city/Albacete/2|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8288016796836732,
+    "learning_rate": 0.1365360925717325,
+    "max_depth": 2,
+    "min_child_weight": 5,
+    "n_estimators": 105,
+    "subsample": 0.7480634801021777
+  },
+  "within_city/Albacete/3|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.31702117650201767,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/3|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7043574493366855,
+    "learning_rate": 0.01053432376004981,
+    "min_child_samples": 7,
+    "n_estimators": 195,
+    "num_leaves": 7,
+    "subsample": 0.815750979360025
+  },
+  "within_city/Albacete/3|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.9002459006563434,
+    "learning_rate": 0.1555223258052747,
+    "max_depth": 2,
+    "min_child_weight": 3,
+    "n_estimators": 135,
+    "subsample": 0.7488072343171133
+  },
+  "within_city/Albacete/4|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.959541228979397,
+    "min_samples_leaf": 2
+  },
+  "within_city/Albacete/4|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7644148053272926,
+    "learning_rate": 0.011189738569669202,
+    "min_child_samples": 20,
+    "n_estimators": 324,
+    "num_leaves": 7,
+    "subsample": 0.695824756266789
+  },
+  "within_city/Albacete/4|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.9002459006563434,
+    "learning_rate": 0.1555223258052747,
+    "max_depth": 2,
+    "min_child_weight": 3,
+    "n_estimators": 135,
+    "subsample": 0.7488072343171133
+  },
+  "within_city/Algeciras/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.31702117650201767,
+    "min_samples_leaf": 1
+  },
+  "within_city/Algeciras/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.6362425738131283,
+    "learning_rate": 0.08192776699882925,
+    "min_child_samples": 16,
+    "n_estimators": 154,
+    "num_leaves": 58,
+    "subsample": 0.836965827544817
+  },
+  "within_city/Algeciras/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Algeciras/1|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "within_city/Algeciras/1|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "within_city/Algeciras/1|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Algeciras/2|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "within_city/Algeciras/2|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7043316699321636,
+    "learning_rate": 0.296201678347482,
+    "min_child_samples": 18,
+    "n_estimators": 239,
+    "num_leaves": 11,
+    "subsample": 0.9601672228653322
+  },
+  "within_city/Algeciras/2|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.9203797178729599,
+    "learning_rate": 0.10005982789609612,
+    "max_depth": 4,
+    "min_child_weight": 1,
+    "n_estimators": 278,
+    "subsample": 0.9282557902975821
+  },
+  "within_city/Algeciras/3|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.61534947637868,
+    "min_samples_leaf": 2
+  },
+  "within_city/Algeciras/3|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7043316699321636,
+    "learning_rate": 0.296201678347482,
+    "min_child_samples": 18,
+    "n_estimators": 239,
+    "num_leaves": 11,
+    "subsample": 0.9601672228653322
+  },
+  "within_city/Algeciras/3|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Algeciras/4|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.31702117650201767,
+    "min_samples_leaf": 1
+  },
+  "within_city/Algeciras/4|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7301598792637071,
+    "learning_rate": 0.12666549392400608,
+    "min_child_samples": 20,
+    "n_estimators": 491,
+    "num_leaves": 13,
+    "subsample": 0.8883759697008518
+  },
+  "within_city/Algeciras/4|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "cross_city/Albacete->Algeciras/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.61534947637868,
+    "min_samples_leaf": 2
+  },
+  "cross_city/Albacete->Algeciras/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.8735855077592565,
+    "learning_rate": 0.08122446223180387,
+    "min_child_samples": 20,
+    "n_estimators": 346,
+    "num_leaves": 8,
+    "subsample": 0.6106045242166487
+  },
+  "cross_city/Albacete->Algeciras/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.9002459006563434,
+    "learning_rate": 0.1555223258052747,
+    "max_depth": 2,
+    "min_child_weight": 3,
+    "n_estimators": 135,
+    "subsample": 0.7488072343171133
+  },
+  "cross_city/Algeciras->Albacete/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.31702117650201767,
+    "min_samples_leaf": 1
+  },
+  "cross_city/Algeciras->Albacete/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.9583054382694077,
+    "learning_rate": 0.050370870987620504,
+    "min_child_samples": 17,
+    "n_estimators": 195,
+    "num_leaves": 10,
+    "subsample": 0.9630265895704372
+  },
+  "cross_city/Algeciras->Albacete/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "mixed/both/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "mixed/both/0|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "mixed/both/1|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/1|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "mixed/both/1|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.6470104987108419,
+    "learning_rate": 0.09098343643021342,
+    "max_depth": 2,
+    "min_child_weight": 3,
+    "n_estimators": 447,
+    "subsample": 0.9848690193898167
+  },
+  "mixed/both/2|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/2|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7086171663278967,
+    "learning_rate": 0.2665593954919876,
+    "min_child_samples": 11,
+    "n_estimators": 295,
+    "num_leaves": 12,
+    "subsample": 0.6206726884674431
+  },
+  "mixed/both/2|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.850375868040629,
+    "learning_rate": 0.162880813182396,
+    "max_depth": 3,
+    "min_child_weight": 2,
+    "n_estimators": 352,
+    "subsample": 0.6377771843023713
+  },
+  "mixed/both/3|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/3|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.8735855077592565,
+    "learning_rate": 0.08122446223180387,
+    "min_child_samples": 20,
+    "n_estimators": 346,
+    "num_leaves": 8,
+    "subsample": 0.6106045242166487
+  },
+  "mixed/both/3|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.6470104987108419,
+    "learning_rate": 0.09098343643021342,
+    "max_depth": 2,
+    "min_child_weight": 3,
+    "n_estimators": 447,
+    "subsample": 0.9848690193898167
+  },
+  "mixed/both/4|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/4|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|lightgbm": {
+    "colsample_bytree": 0.8735855077592565,
+    "learning_rate": 0.08122446223180387,
+    "min_child_samples": 20,
+    "n_estimators": 346,
+    "num_leaves": 8,
+    "subsample": 0.6106045242166487
+  },
+  "mixed/both/4|anchura,cruces,iluminacion,mobiliario,pavimento,pendiente,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Albacete/0|cruces,mobiliario|random_forest": {
+    "max_depth": 10,
+    "max_features": 0.7921132712266244,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/0|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "within_city/Albacete/0|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Albacete/1|cruces,mobiliario|random_forest": {
+    "max_depth": 10,
+    "max_features": 0.7921132712266244,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/1|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.8735855077592565,
+    "learning_rate": 0.08122446223180387,
+    "min_child_samples": 20,
+    "n_estimators": 346,
+    "num_leaves": 8,
+    "subsample": 0.6106045242166487
+  },
+  "within_city/Albacete/1|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Albacete/2|cruces,mobiliario|random_forest": {
+    "max_depth": 9,
+    "max_features": 0.495052524965628,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/2|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "within_city/Albacete/2|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Albacete/3|cruces,mobiliario|random_forest": {
+    "max_depth": 9,
+    "max_features": 0.495052524965628,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/3|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "within_city/Albacete/3|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Albacete/4|cruces,mobiliario|random_forest": {
+    "max_depth": 9,
+    "max_features": 0.495052524965628,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/4|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.651400141293564,
+    "learning_rate": 0.15785085237619165,
+    "min_child_samples": 15,
+    "n_estimators": 200,
+    "num_leaves": 18,
+    "subsample": 0.7544410551203097
+  },
+  "within_city/Albacete/4|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.9203797178729599,
+    "learning_rate": 0.10005982789609612,
+    "max_depth": 4,
+    "min_child_weight": 1,
+    "n_estimators": 278,
+    "subsample": 0.9282557902975821
+  },
+  "within_city/Algeciras/0|cruces,mobiliario|random_forest": {
+    "max_depth": 3,
+    "max_features": 0.46769332346688064,
+    "min_samples_leaf": 2
+  },
+  "within_city/Algeciras/0|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7644148053272926,
+    "learning_rate": 0.011189738569669202,
+    "min_child_samples": 20,
+    "n_estimators": 324,
+    "num_leaves": 7,
+    "subsample": 0.695824756266789
+  },
+  "within_city/Algeciras/0|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8288016796836732,
+    "learning_rate": 0.1365360925717325,
+    "max_depth": 2,
+    "min_child_weight": 5,
+    "n_estimators": 105,
+    "subsample": 0.7480634801021777
+  },
+  "within_city/Algeciras/1|cruces,mobiliario|random_forest": {
+    "max_depth": 3,
+    "max_features": 0.46769332346688064,
+    "min_samples_leaf": 2
+  },
+  "within_city/Algeciras/1|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.8735855077592565,
+    "learning_rate": 0.08122446223180387,
+    "min_child_samples": 20,
+    "n_estimators": 346,
+    "num_leaves": 8,
+    "subsample": 0.6106045242166487
+  },
+  "within_city/Algeciras/1|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8288016796836732,
+    "learning_rate": 0.1365360925717325,
+    "max_depth": 2,
+    "min_child_weight": 5,
+    "n_estimators": 105,
+    "subsample": 0.7480634801021777
+  },
+  "within_city/Algeciras/2|cruces,mobiliario|random_forest": {
+    "max_depth": 3,
+    "max_features": 0.46769332346688064,
+    "min_samples_leaf": 2
+  },
+  "within_city/Algeciras/2|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7086171663278967,
+    "learning_rate": 0.2665593954919876,
+    "min_child_samples": 11,
+    "n_estimators": 295,
+    "num_leaves": 12,
+    "subsample": 0.6206726884674431
+  },
+  "within_city/Algeciras/2|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Algeciras/3|cruces,mobiliario|random_forest": {
+    "max_depth": 3,
+    "max_features": 0.9984183395342592,
+    "min_samples_leaf": 1
+  },
+  "within_city/Algeciras/3|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "within_city/Algeciras/3|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.9105651842967988,
+    "learning_rate": 0.031871914594679834,
+    "max_depth": 6,
+    "min_child_weight": 1,
+    "n_estimators": 282,
+    "subsample": 0.9003484271165989
+  },
+  "within_city/Algeciras/4|cruces,mobiliario|random_forest": {
+    "max_depth": 3,
+    "max_features": 0.46769332346688064,
+    "min_samples_leaf": 2
+  },
+  "within_city/Algeciras/4|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.8735855077592565,
+    "learning_rate": 0.08122446223180387,
+    "min_child_samples": 20,
+    "n_estimators": 346,
+    "num_leaves": 8,
+    "subsample": 0.6106045242166487
+  },
+  "within_city/Algeciras/4|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.6470104987108419,
+    "learning_rate": 0.09098343643021342,
+    "max_depth": 2,
+    "min_child_weight": 3,
+    "n_estimators": 447,
+    "subsample": 0.9848690193898167
+  },
+  "cross_city/Albacete->Algeciras/0|cruces,mobiliario|random_forest": {
+    "max_depth": 10,
+    "max_features": 0.7921132712266244,
+    "min_samples_leaf": 1
+  },
+  "cross_city/Albacete->Algeciras/0|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "cross_city/Albacete->Algeciras/0|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "cross_city/Algeciras->Albacete/0|cruces,mobiliario|random_forest": {
+    "max_depth": 3,
+    "max_features": 0.9984183395342592,
+    "min_samples_leaf": 1
+  },
+  "cross_city/Algeciras->Albacete/0|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7086171663278967,
+    "learning_rate": 0.2665593954919876,
+    "min_child_samples": 11,
+    "n_estimators": 295,
+    "num_leaves": 12,
+    "subsample": 0.6206726884674431
+  },
+  "cross_city/Algeciras->Albacete/0|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "mixed/both/0|cruces,mobiliario|random_forest": {
+    "max_depth": 9,
+    "max_features": 0.495052524965628,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/0|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.749816047538945,
+    "learning_rate": 0.2536999076681772,
+    "min_child_samples": 15,
+    "n_estimators": 171,
+    "num_leaves": 27,
+    "subsample": 0.6624074561769746
+  },
+  "mixed/both/0|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.6677970986744369,
+    "learning_rate": 0.066445103068906,
+    "max_depth": 3,
+    "min_child_weight": 3,
+    "n_estimators": 459,
+    "subsample": 0.6281664523398175
+  },
+  "mixed/both/1|cruces,mobiliario|random_forest": {
+    "max_depth": 5,
+    "max_features": 0.7978046727066124,
+    "min_samples_leaf": 3
+  },
+  "mixed/both/1|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.8735855077592565,
+    "learning_rate": 0.08122446223180387,
+    "min_child_samples": 20,
+    "n_estimators": 346,
+    "num_leaves": 8,
+    "subsample": 0.6106045242166487
+  },
+  "mixed/both/1|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "mixed/both/2|cruces,mobiliario|random_forest": {
+    "max_depth": 8,
+    "max_features": 0.5791771097111871,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/2|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7586606407817007,
+    "learning_rate": 0.20770161860329345,
+    "min_child_samples": 6,
+    "n_estimators": 104,
+    "num_leaves": 35,
+    "subsample": 0.6339350856340767
+  },
+  "mixed/both/2|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.925119826903001,
+    "learning_rate": 0.2507269439288454,
+    "max_depth": 2,
+    "min_child_weight": 4,
+    "n_estimators": 391,
+    "subsample": 0.7505038342123663
+  },
+  "mixed/both/3|cruces,mobiliario|random_forest": {
+    "max_depth": 8,
+    "max_features": 0.5791771097111871,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/3|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.749816047538945,
+    "learning_rate": 0.2536999076681772,
+    "min_child_samples": 15,
+    "n_estimators": 171,
+    "num_leaves": 27,
+    "subsample": 0.6624074561769746
+  },
+  "mixed/both/3|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "mixed/both/4|cruces,mobiliario|random_forest": {
+    "max_depth": 9,
+    "max_features": 0.495052524965628,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/4|cruces,mobiliario|lightgbm": {
+    "colsample_bytree": 0.7086171663278967,
+    "learning_rate": 0.2665593954919876,
+    "min_child_samples": 11,
+    "n_estimators": 295,
+    "num_leaves": 12,
+    "subsample": 0.6206726884674431
+  },
+  "mixed/both/4|cruces,mobiliario|xgboost_balanced": {
+    "colsample_bytree": 0.850375868040629,
+    "learning_rate": 0.162880813182396,
+    "max_depth": 3,
+    "min_child_weight": 2,
+    "n_estimators": 352,
+    "subsample": 0.6377771843023713
+  },
+  "within_city/Albacete/0|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 9,
+    "max_features": 0.495052524965628,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/0|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7735406596951893,
+    "learning_rate": 0.0387828582840862,
+    "min_child_samples": 14,
+    "n_estimators": 345,
+    "num_leaves": 11,
+    "subsample": 0.954672154919219
+  },
+  "within_city/Albacete/0|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.6470104987108419,
+    "learning_rate": 0.09098343643021342,
+    "max_depth": 2,
+    "min_child_weight": 3,
+    "n_estimators": 447,
+    "subsample": 0.9848690193898167
+  },
+  "within_city/Albacete/1|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.5181977532625877,
+    "min_samples_leaf": 6
+  },
+  "within_city/Albacete/1|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.8603553891795411,
+    "learning_rate": 0.012115092723815248,
+    "min_child_samples": 12,
+    "n_estimators": 393,
+    "num_leaves": 8,
+    "subsample": 0.6727299868828402
+  },
+  "within_city/Albacete/1|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.850375868040629,
+    "learning_rate": 0.162880813182396,
+    "max_depth": 3,
+    "min_child_weight": 2,
+    "n_estimators": 352,
+    "subsample": 0.6377771843023713
+  },
+  "within_city/Albacete/2|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/2|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.6174415087017735,
+    "learning_rate": 0.2944907773341731,
+    "min_child_samples": 18,
+    "n_estimators": 145,
+    "num_leaves": 59,
+    "subsample": 0.9533976089065036
+  },
+  "within_city/Albacete/2|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Albacete/3|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/3|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.8735855077592565,
+    "learning_rate": 0.08122446223180387,
+    "min_child_samples": 20,
+    "n_estimators": 346,
+    "num_leaves": 8,
+    "subsample": 0.6106045242166487
+  },
+  "within_city/Albacete/3|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Albacete/4|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "within_city/Albacete/4|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "within_city/Albacete/4|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "within_city/Algeciras/0|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 3,
+    "max_features": 0.9984183395342592,
+    "min_samples_leaf": 1
+  },
+  "within_city/Algeciras/0|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.6850911580096916,
+    "learning_rate": 0.24982970226000056,
+    "min_child_samples": 20,
+    "n_estimators": 156,
+    "num_leaves": 45,
+    "subsample": 0.6364824412194762
+  },
+  "within_city/Algeciras/0|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.925119826903001,
+    "learning_rate": 0.2507269439288454,
+    "max_depth": 2,
+    "min_child_weight": 4,
+    "n_estimators": 391,
+    "subsample": 0.7505038342123663
+  },
+  "within_city/Algeciras/1|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 4,
+    "max_features": 0.651875316260203,
+    "min_samples_leaf": 6
+  },
+  "within_city/Algeciras/1|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.749816047538945,
+    "learning_rate": 0.2536999076681772,
+    "min_child_samples": 15,
+    "n_estimators": 171,
+    "num_leaves": 27,
+    "subsample": 0.6624074561769746
+  },
+  "within_city/Algeciras/1|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.925119826903001,
+    "learning_rate": 0.2507269439288454,
+    "max_depth": 2,
+    "min_child_weight": 4,
+    "n_estimators": 391,
+    "subsample": 0.7505038342123663
+  },
+  "within_city/Algeciras/2|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.31702117650201767,
+    "min_samples_leaf": 1
+  },
+  "within_city/Algeciras/2|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.8807867509030813,
+    "learning_rate": 0.14978980878501189,
+    "min_child_samples": 16,
+    "n_estimators": 470,
+    "num_leaves": 29,
+    "subsample": 0.6110467087494819
+  },
+  "within_city/Algeciras/2|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.925119826903001,
+    "learning_rate": 0.2507269439288454,
+    "max_depth": 2,
+    "min_child_weight": 4,
+    "n_estimators": 391,
+    "subsample": 0.7505038342123663
+  },
+  "within_city/Algeciras/3|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.31702117650201767,
+    "min_samples_leaf": 1
+  },
+  "within_city/Algeciras/3|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7086171663278967,
+    "learning_rate": 0.2665593954919876,
+    "min_child_samples": 11,
+    "n_estimators": 295,
+    "num_leaves": 12,
+    "subsample": 0.6206726884674431
+  },
+  "within_city/Algeciras/3|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.9203797178729599,
+    "learning_rate": 0.10005982789609612,
+    "max_depth": 4,
+    "min_child_weight": 1,
+    "n_estimators": 278,
+    "subsample": 0.9282557902975821
+  },
+  "within_city/Algeciras/4|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 3,
+    "max_features": 0.46769332346688064,
+    "min_samples_leaf": 2
+  },
+  "within_city/Algeciras/4|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "within_city/Algeciras/4|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.850375868040629,
+    "learning_rate": 0.162880813182396,
+    "max_depth": 3,
+    "min_child_weight": 2,
+    "n_estimators": 352,
+    "subsample": 0.6377771843023713
+  },
+  "cross_city/Albacete->Algeciras/0|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.9498229938114078,
+    "min_samples_leaf": 1
+  },
+  "cross_city/Albacete->Algeciras/0|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.8735855077592565,
+    "learning_rate": 0.08122446223180387,
+    "min_child_samples": 20,
+    "n_estimators": 346,
+    "num_leaves": 8,
+    "subsample": 0.6106045242166487
+  },
+  "cross_city/Albacete->Algeciras/0|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.925119826903001,
+    "learning_rate": 0.2507269439288454,
+    "max_depth": 2,
+    "min_child_weight": 4,
+    "n_estimators": 391,
+    "subsample": 0.7505038342123663
+  },
+  "cross_city/Algeciras->Albacete/0|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.31702117650201767,
+    "min_samples_leaf": 1
+  },
+  "cross_city/Algeciras->Albacete/0|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.641249547534373,
+    "learning_rate": 0.2153674579485446,
+    "min_child_samples": 18,
+    "n_estimators": 183,
+    "num_leaves": 54,
+    "subsample": 0.7558472344876814
+  },
+  "cross_city/Algeciras->Albacete/0|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.850375868040629,
+    "learning_rate": 0.162880813182396,
+    "max_depth": 3,
+    "min_child_weight": 2,
+    "n_estimators": 352,
+    "subsample": 0.6377771843023713
+  },
+  "mixed/both/0|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 6,
+    "max_features": 0.31702117650201767,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/0|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7793696571944989,
+    "learning_rate": 0.29439759303831553,
+    "min_child_samples": 8,
+    "n_estimators": 260,
+    "num_leaves": 10,
+    "subsample": 0.69489963499872
+  },
+  "mixed/both/0|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.925119826903001,
+    "learning_rate": 0.2507269439288454,
+    "max_depth": 2,
+    "min_child_weight": 4,
+    "n_estimators": 391,
+    "subsample": 0.7505038342123663
+  },
+  "mixed/both/1|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 9,
+    "max_features": 0.495052524965628,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/1|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.8807867509030813,
+    "learning_rate": 0.14978980878501189,
+    "min_child_samples": 16,
+    "n_estimators": 470,
+    "num_leaves": 29,
+    "subsample": 0.6110467087494819
+  },
+  "mixed/both/1|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.606182646611547,
+    "learning_rate": 0.23509266543399573,
+    "max_depth": 2,
+    "min_child_weight": 5,
+    "n_estimators": 194,
+    "subsample": 0.9854479908357011
+  },
+  "mixed/both/2|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.9498229938114078,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/2|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.7511950360489018,
+    "learning_rate": 0.11002594335769175,
+    "min_child_samples": 14,
+    "n_estimators": 445,
+    "num_leaves": 25,
+    "subsample": 0.6444789929224605
+  },
+  "mixed/both/2|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8463404657559656,
+    "learning_rate": 0.24788049301028076,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "n_estimators": 483,
+    "subsample": 0.8545614389784044
+  },
+  "mixed/both/3|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/3|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.749816047538945,
+    "learning_rate": 0.2536999076681772,
+    "min_child_samples": 15,
+    "n_estimators": 171,
+    "num_leaves": 27,
+    "subsample": 0.6624074561769746
+  },
+  "mixed/both/3|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.850375868040629,
+    "learning_rate": 0.162880813182396,
+    "max_depth": 3,
+    "min_child_weight": 2,
+    "n_estimators": 352,
+    "subsample": 0.6377771843023713
+  },
+  "mixed/both/4|anchura,cruces,mobiliario,senalizacion|random_forest": {
+    "max_depth": 7,
+    "max_features": 0.6518459651736345,
+    "min_samples_leaf": 1
+  },
+  "mixed/both/4|anchura,cruces,mobiliario,senalizacion|lightgbm": {
+    "colsample_bytree": 0.9844762255295657,
+    "learning_rate": 0.2174266007812207,
+    "min_child_samples": 16,
+    "n_estimators": 384,
+    "num_leaves": 19,
+    "subsample": 0.6858356478833496
+  },
+  "mixed/both/4|anchura,cruces,mobiliario,senalizacion|xgboost_balanced": {
+    "colsample_bytree": 0.8042989210310263,
+    "learning_rate": 0.04135867955263894,
+    "max_depth": 6,
+    "min_child_weight": 1,
+    "n_estimators": 406,
+    "subsample": 0.7077649335194086
+  }
+}
