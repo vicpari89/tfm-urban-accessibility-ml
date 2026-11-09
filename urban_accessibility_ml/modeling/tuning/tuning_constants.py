@@ -6,12 +6,16 @@ Every key of a "space" must be a keyword argument of the build_model of that mod
 
 from scipy.stats import loguniform, randint, uniform
 
+from urban_accessibility_ml.config import FEATURE_SETS
+
 TUNING_METRIC = "f1_macro"  # one of config.METRICS
 TUNING_INNER_SPLITS = 3  # inner folds (StratifiedGroupKFold) inside the train rows of a partition
 TUNING_N_CANDIDATES = 30  # candidates of a "random" search; a "grid" tries all of them
 TUNING_TIE_TOLERANCE = 0.005  # candidates this close to the best are a tie: the simplest wins
 TUNING_FEATURE_SET = "completo"  # reference feature set and profile of the tuning
 TUNING_PROFILE = "global"
+# Order of the tuning: the reference set first, then the others
+TUNING_FEATURE_SET_ORDER = [TUNING_FEATURE_SET] + [f for f in FEATURE_SETS if f != TUNING_FEATURE_SET]
 
 C_VALUES = [0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000]
 

@@ -10,7 +10,7 @@ from urban_accessibility_ml.modeling.tuning.tuning_constants import (
     SEARCH_SPACES,
     TUNING_N_CANDIDATES,
 )
-from urban_accessibility_ml.modeling.tuning.tuning_search import _pick_best, tune_all, tune_model, tune_partition
+from urban_accessibility_ml.modeling.tuning.tuning_search import _pick_best, time_candidate, tune_model, tune_partition
 from urban_accessibility_ml.preprocessing.split import Split, build_all_splits
 
 N_ROWS_PER_CLASS = {0: 60, 1: 45, 2: 15}  # C, B, A: imbalanced like the real data
@@ -32,12 +32,12 @@ SMALL_LR_SPACE = [
 N_SMALL_LR_CANDIDATES = 2
 
 
-def light_build_model(name):
+def light_build_model(name, params=None):
     """
     build_model for the tests: one thread (n_jobs=-1 costs more than it saves with so few rows)
     and small forests, so the fits of the tests are fast.
     """
-    model = build_model(name)
+    model = build_model(name, params=params)
     if "n_jobs" in model.get_params():
         model.set_params(n_jobs=1)
     if name == "random_forest":
@@ -124,6 +124,37 @@ class TestTuneModel:
         tune_model("logistic_regression", X, y, groups)
         assert created == [{"n_splits": N_INNER_FOLDS, "shuffle": True, "random_state": SEED}]
         assert all(g is not None and (np.asarray(g) == groups.to_numpy()).all() for g in split_groups)
+
+
+class TestSeedAndCandidates:
+    @pytest.mark.usefixtures("small_lr")
+    def test_the_seed_goes_to_the_inner_folds(self, data, monkeypatch):
+        X, y, groups = data
+        created = []
+
+        class Recorder(StratifiedGroupKFold):
+            def __init__(self, **kwargs):
+                created.append(kwargs)
+                super().__init__(**kwargs)
+
+        monkeypatch.setattr(tuning, "StratifiedGroupKFold", Recorder)
+        tune_model("logistic_regression", X, y, groups, seed=7)
+        assert created[0]["random_state"] == 7
+
+    def test_a_random_search_uses_the_seed_and_the_number_of_candidates(self):
+        cv = StratifiedGroupKFold(n_splits=3)
+        search = tuning._build_search("random_forest", cv, 1, seed=5, n_candidates=7)
+        assert (search.random_state, search.n_iter) == (5, 7)
+
+    def test_by_default_it_is_the_project_seed_and_tuning_n_candidates(self):
+        cv = StratifiedGroupKFold(n_splits=3)
+        search = tuning._build_search("random_forest", cv, 1)
+        assert (search.random_state, search.n_iter) == (SEED, TUNING_N_CANDIDATES)
+
+    def test_another_seed_samples_other_candidates(self, data):
+        X, y, groups = data
+        first = [time_candidate("random_forest", X, y, groups, 1, seed, 4)[1] for seed in (1, 2)]
+        assert first == [4, 4]  # the number of candidates follows n_candidates
 
 
 class TestPickBest:
@@ -450,12 +481,12 @@ class TestTunePartition:
         split = build_all_splits(city_df)[0]
         seen = []
 
-        def spy(model_name, X_train, y_train, groups_train):
+        def spy(model_name, X_train, y_train, groups_train, n_jobs=1, seed=None, n_candidates=None):
             seen.append(set(X_train.index))
             return fake_table()  # what matters here is the rows it receives, not the fit
 
         monkeypatch.setattr(tuning, "tune_model", spy)
-        tune_partition(city_df, split)
+        tune_partition(city_df, split, "completo")
         assert len(seen) == len(tiny_all)
         assert all(ids == set(split.train_ids) for ids in seen)
         assert not set(split.test_ids) & set().union(*seen)
@@ -466,11 +497,30 @@ class TestTunePartition:
         test_rows = changed.index.isin(split.test_ids)
         changed.loc[test_rows, "clase_total"] = "C"  # corrupt the test targets...
         changed.loc[test_rows, "puntuacion_pendiente_global"] = 99.0  # ...and one test input
-        assert tune_partition(city_df, split)[0] == tune_partition(changed, split)[0]
+        assert tune_partition(city_df, split, "completo")[0] == tune_partition(changed, split, "completo")[0]
+
+    def test_uses_only_the_dimensions_of_the_feature_set_and_passes_n_jobs(self, city_df, tiny_all, monkeypatch):
+        split = build_all_splits(city_df)[0]
+        seen = []
+
+        def spy(model_name, X_train, y_train, groups_train, n_jobs=1, seed=None, n_candidates=None):
+            seen.append((list(X_train.columns), n_jobs))
+            return fake_table()
+
+        monkeypatch.setattr(tuning, "tune_model", spy)
+        tune_partition(city_df, split, "cartografico_aereo", n_jobs=2)
+        columns = ["puntuacion_cruces_global", "puntuacion_mobiliario_global"]
+        assert seen[0] == (columns, 2)  # only those dimensions, and the n_jobs reaches the model
+
+    def test_tunes_only_the_models_asked_for(self, city_df, tiny_all):
+        split = build_all_splits(city_df)[0]
+        best, candidates = tune_partition(city_df, split, "completo", models=["logistic_regression"])
+        assert list(best) == ["logistic_regression"]
+        assert set(candidates["model"]) == {"logistic_regression"}
 
     def test_returns_params_and_candidates_of_every_model(self, city_df, tiny_all):
         split = build_all_splits(city_df)[0]
-        best, candidates = tune_partition(city_df, split)
+        best, candidates = tune_partition(city_df, split, "completo")
         assert list(best) == list(tiny_all)
         assert set(candidates["model"]) == set(tiny_all)
         keys = ["strategy", "name", "fold"]
@@ -480,57 +530,22 @@ class TestTunePartition:
         assert candidates.groupby("model")["selected"].sum().eq(1).all()  # one selected per model
 
 
-class TestTuneAll:
-    @pytest.fixture
-    def splits(self, city_df):
-        all_splits = build_all_splits(city_df)
-        return [all_splits[0], all_splits[10]]  # within_city Albacete 0, and a cross_city one
+class TestTimeCandidate:
+    def test_returns_positive_seconds_and_the_number_of_candidates(self, data):
+        seconds, n_candidates = time_candidate("logistic_regression", *data)
+        assert seconds > 0
+        assert n_candidates == N_CANDIDATES
 
-    @pytest.fixture
-    def fake_partition(self, monkeypatch):
-        """tune_partition without fitting: it records the dataframe it receives for each split."""
-        received = []
+    def test_a_random_search_has_tuning_n_candidates(self, data):
+        assert time_candidate("random_forest", *data)[1] == TUNING_N_CANDIDATES
 
-        def fake(df, split):
-            received.append((df, split.key))
-            best, table = fake_table()
-            return {"logistic_regression": {"C": 1}}, table.assign(name=split.name)
 
-        monkeypatch.setattr(tuning, "tune_partition", fake)
-        return received
+class TestOneThreadPerModel:
+    @pytest.mark.parametrize("model_name", ["random_forest", "lightgbm", "xgboost_balanced"])
+    def test_models_get_one_thread_when_the_candidates_run_in_parallel(self, model_name):
+        cv = StratifiedGroupKFold(n_splits=3)
+        assert tuning._build_search(model_name, cv, 4).estimator.get_params()["n_jobs"] == 1
 
-    def test_result_has_every_partition_with_every_model_and_candidate(
-        self, city_df, tiny_all, splits
-    ):
-        best, candidates = tune_all(city_df, splits)
-        assert list(best) == [s.key for s in splits]
-        assert any(k.startswith("cross_city/") and "->" in k for k in best)
-        assert all(list(models) == list(tiny_all) for models in best.values())
-        pairs = candidates[["strategy", "name", "fold", "model"]].drop_duplicates()
-        assert len(pairs) == len(splits) * len(tiny_all)
-
-    def test_calls_tune_partition_once_per_partition(self, city_df, splits, fake_partition):
-        tune_all(city_df, splits)
-        assert [key for _, key in fake_partition] == [s.key for s in splits]
-
-    def test_gives_tune_partition_the_dataframe_indexed_by_key_tramo(
-        self, city_df, splits, fake_partition
-    ):
-        tune_all(city_df.reset_index(drop=True), splits)  # key_tramo only as a column
-        assert all(df.index.name == "key_tramo" for df, _ in fake_partition)
-
-    def test_joins_the_tables_of_all_the_partitions(self, city_df, splits, fake_partition):
-        _, candidates = tune_all(city_df, splits)
-        assert list(candidates["name"]) == [s.name for s in splits]
-
-    def test_does_not_modify_the_dataframe(self, city_df, splits, fake_partition):
-        plain = city_df.reset_index(drop=True)
-        before = plain.copy()
-        tune_all(plain, splits)
-        pd.testing.assert_frame_equal(plain, before)
-
-    def test_is_reproducible(self, city_df, tiny_all, splits):
-        first = tune_all(city_df, splits[:1])
-        second = tune_all(city_df, splits[:1])
-        assert first[0] == second[0]
-        pd.testing.assert_frame_equal(first[1], second[1])
+    def test_models_keep_their_threads_when_the_candidates_do_not(self):
+        cv = StratifiedGroupKFold(n_splits=3)
+        assert tuning._build_search("random_forest", cv, 1).estimator.get_params()["n_jobs"] == -1

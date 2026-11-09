@@ -74,10 +74,16 @@ unified: requirements
 	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.data.dataset --notebooks
 
 
-## Tune the hyperparameters in the 17 partitions (about 30 min) and write reports/results/best_params.json
+## Tune the hyperparameters in the 17 partitions and the feature sets (resumable) and write reports/results/best_params.json
 .PHONY: tune
 tune: requirements
 	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.modeling.tuning.tuning_run
+
+
+## Tune the tree models with another seed and with 100 candidates (about an hour) and run the matrix for each; results in reports/results/variants/
+.PHONY: tune-variants
+tune-variants: requirements
+	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.modeling.tuning.tuning_variants
 
 
 ## Run the experiment matrix with the default and the tuned hyperparameters and write the 2 CSV in reports/results/

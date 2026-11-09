@@ -57,10 +57,11 @@ The models, the tuning and the experiment matrix are in `urban_accessibility_ml/
 
 | Command | What it does |
 |---|---|
-| `make tune` | Tunes the hyperparameters of logistic regression, random forest, XGBoost and LightGBM in each of the 17 partitions, using only their training rows (about 45 minutes). Writes `reports/results/best_params.json` and `reports/results/tuning-candidates.csv`. |
+| `make tune` | Tunes the hyperparameters of logistic regression, random forest, XGBoost and LightGBM in each of the 17 partitions and each feature set (`calle` and `combinado` share it), using only their training rows. It saves each result when it ends and continues a stopped run. Writes `reports/results/best_params.json` and `reports/results/tuning-candidates.csv`. |
+| `make tune-variants` | Repeats the tuning of the three tree models with another seed and with 100 candidates, and runs the experiment matrix for each, to see how much the tuning depends on chance (about an hour). Continues a stopped run. Writes `best_params_*.json`, `tuning-candidates_*.csv` and `experiment-matrix_*.csv` in `reports/results/variants/`. |
 | `make experiments` | Runs the experiment matrix (5 models × 4 feature sets × 4 profiles × 17 partitions) twice, with the default and with the tuned hyperparameters (about 8 minutes). Writes `reports/results/experiment-matrix-default.csv` and `reports/results/experiment-matrix-tuned.csv`. |
 
-Both commands stop before running if their result files already exist. To write over them, run the module with `--overwrite`, for example `uv run python -m urban_accessibility_ml.modeling.experiments_run --overwrite`. The results are committed, so the notebooks below can read them without running anything long.
+`make experiments` stops before running if its result files already exist; to write over them, run the module with `--overwrite`, for example `uv run python -m urban_accessibility_ml.modeling.experiments_run --overwrite`. `make tune` skips what is already in `best_params.json`; run `uv run python -m urban_accessibility_ml.modeling.tuning.tuning_run` with `--overwrite` to start from scratch, `--n-jobs` to set the parallel fits (half of the cores by default) or `--dry-run` to only estimate the time left. `make tune-variants` accepts the same options, and `--variant` to run only one of them. The results are committed, so the notebooks below can read them without running anything long.
 
 | Notebook | Content |
 |---|---|
@@ -70,6 +71,7 @@ Both commands stop before running if their result files already exist. To write 
 | `0.10` | Experiment matrix with the default hyperparameters. |
 | `0.11` | Hyperparameter tuning: search spaces, procedure and chosen values. It reads the results of `make tune`. |
 | `0.12` | Default against tuned hyperparameters in the test set. It reads the results of `make experiments`. |
+| `0.13` | How much the tuning of the tree models depends on the seed and on the number of candidates. It reads the results of `make tune-variants`. |
 
 ## Documentation
 
@@ -106,7 +108,7 @@ To preview it in local: `make docs` (runs the notebooks on temporary copies; nee
 │
 ├── models             <- Trained and serialized models, model predictions, or model summaries
 │
-├── notebooks          <- Jupyter notebooks, numbered in order (`0.01` to `0.12`) with a short
+├── notebooks          <- Jupyter notebooks, numbered in order (`0.01` to `0.13`) with a short
 │                         `-` delimited description, e.g. `0.11-hyperparameter-tuning`.
 │
 ├── pyproject.toml     <- Project configuration file with package metadata for 
@@ -117,7 +119,8 @@ To preview it in local: `make docs` (runs the notebooks on temporary copies; nee
 ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
 │   ├── figures        <- Generated graphics and figures to be used in reporting
 │   └── results        <- Results of the models: tuning (`best_params.json`, `tuning-candidates.csv`),
-│                         the matrices of `make experiments` (`experiment-matrix-*.csv`) and the CSV
+│                         the matrices of `make experiments` (`experiment-matrix-*.csv`), the variants of the tuning
+│                         (`variants/`) and the CSV
 │                         that notebooks 0.08 to 0.10 write
 │
 ├── scripts            <- `build_docs.sh` (builds the documentation) and `download_raw.py` (raw data from Zenodo)
@@ -150,7 +153,7 @@ To preview it in local: `make docs` (runs the notebooks on temporary copies; nee
     │   ├── experiments.py          <- `run_experiments`: the whole matrix, and `save_results`
     │   ├── experiments_run.py      <- `make experiments`: the matrix with default and tuned hyperparameters
     │   ├── predict.py              <- Code to run model inference with trained models
-    │   └── tuning                  <- Hyperparameter tuning, launched with `make tune` (`tuning_run.py`)
+    │   └── tuning                  <- Hyperparameter tuning, launched with `make tune` (`tuning_run.py`) and its variants (`tuning_variants.py`, `make tune-variants`)
     │
     └── plotting                <- Visual system of the thesis
         ├── palettes.py             <- Colour palettes

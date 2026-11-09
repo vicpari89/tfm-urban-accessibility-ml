@@ -4,6 +4,7 @@ import pytest
 
 from urban_accessibility_ml.modeling import experiments
 from urban_accessibility_ml.modeling.experiments import run_experiments, save_results
+from urban_accessibility_ml.modeling.tuning.tuning_results import tuning_key
 from urban_accessibility_ml.preprocessing.split import Split, build_all_splits
 
 FEATURE_SET = "completo"
@@ -95,7 +96,7 @@ def test_run_experiments_without_hyperparameters_gives_none_to_run_one(city_df, 
 
 def test_run_experiments_with_tuned_params_end_to_end(city_df):
     splits = build_all_splits(city_df)[:2]
-    hyperparameters = {s.key: {"logistic_regression": {"C": 0.1}} for s in splits}
+    hyperparameters = {tuning_key(s, FEATURE_SET, "logistic_regression"): {"C": 0.1} for s in splits}
     results = run_experiments(
         city_df, splits, [FEATURE_SET], [PROFILE], ["dummy", "logistic_regression"], hyperparameters
     )
