@@ -175,3 +175,46 @@ def test_run_one_trains_every_tuned_model_with_its_params(df, model_name, params
     assert row["model"] == model_name
     assert 0 <= row["f1_macro"] <= 1
 
+
+
+# --- fallback_to_complete ----------------------------------------------------------------------
+
+
+def test_run_one_fallback_uses_the_params_of_completo(df, monkeypatch):
+    received = spy_on_build_model(monkeypatch)
+    hyperparameters = {key("logistic_regression", feature_set="completo"): {"C": 0.1}}
+    run_one(df, SPLIT, "calle", PROFILE, "logistic_regression", hyperparameters, None, True)
+    assert received == [{"C": 0.1}]
+
+
+def test_run_one_fallback_prefers_the_own_entry(df, monkeypatch):
+    received = spy_on_build_model(monkeypatch)
+    hyperparameters = {
+        key("logistic_regression", feature_set="calle"): {"C": 5},
+        key("logistic_regression", feature_set="completo"): {"C": 0.1},
+    }
+    run_one(df, SPLIT, "calle", PROFILE, "logistic_regression", hyperparameters, None, True)
+    assert received == [{"C": 5}]
+
+
+def test_run_one_fallback_takes_completo_of_the_same_partition_and_model(df, monkeypatch):
+    received = spy_on_build_model(monkeypatch)
+    hyperparameters = {
+        key("logistic_regression", OTHER_SPLIT, "completo"): {"C": 99},
+        key("random_forest", feature_set="completo"): {"max_depth": 3},
+        key("logistic_regression", feature_set="completo"): {"C": 0.1},
+    }
+    run_one(df, SPLIT, "calle", PROFILE, "logistic_regression", hyperparameters, None, True)
+    assert received == [{"C": 0.1}]
+
+
+def test_run_one_without_fallback_still_raises_if_only_completo_exists(df):
+    hyperparameters = {key("logistic_regression", feature_set="completo"): {"C": 0.1}}
+    with pytest.raises(KeyError, match="within_city/Albacete/2"):
+        run_one(df, SPLIT, "calle", PROFILE, "logistic_regression", hyperparameters)
+
+
+def test_run_one_fallback_raises_if_completo_is_missing_too(df):
+    hyperparameters = {key("logistic_regression", OTHER_SPLIT, "completo"): {"C": 0.1}}
+    with pytest.raises(KeyError, match="within_city/Albacete/2"):
+        run_one(df, SPLIT, "calle", PROFILE, "logistic_regression", hyperparameters, None, True)

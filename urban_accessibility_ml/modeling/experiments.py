@@ -22,6 +22,8 @@ def run_experiments(
     profiles: list[str] | None = None,
     model_names: list[str] | None = None,
     hyperparameters: dict | None = None,
+    threshold: int | None = None,
+    fallback_to_complete: bool = False,
 ) -> pd.DataFrame:
     """
     Run every combination of split x feature set x profile x model with run_one.
@@ -32,6 +34,8 @@ def run_experiments(
     :param profiles: profiles to combine. By default config.PROFILES.
     :param model_names: models to combine. By default config.MATRIX_MODELS.
     :param hyperparameters: {tuning_key: params} (best_params.json). None: the model defaults.
+    :param threshold: viability threshold of the feature sets. None: config.THRESHOLD.
+    :param fallback_to_complete: use the "completo" hyperparameters when a combination has none.
     :return: one row per model and fold.
     :raises ValueError: if a feature set, a profile or a model does not exist.
     """
@@ -50,7 +54,7 @@ def run_experiments(
     # 3. One run_one per combination, with a progress bar
     combinations = list(product(splits, feature_sets, profiles, model_names))
     rows = [
-        run_one(indexed, split, feature_set, profile, model_name, hyperparameters)
+        run_one(indexed, split, feature_set, profile, model_name, hyperparameters, threshold, fallback_to_complete)
         for split, feature_set, profile, model_name in tqdm(combinations, desc="experiments")
     ]
     return pd.DataFrame(rows)
