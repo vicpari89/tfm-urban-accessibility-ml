@@ -53,8 +53,14 @@ def run_sensitivity(
 def _run_set(df, splits, first, best_params, profiles, model_names) -> pd.DataFrame:
     """The matrix for one set (a row of sensitivity_sets), with used_fallback."""
     results = run_experiments(
-        df, splits, [first.feature_set], profiles, model_names, best_params,
-        threshold=first.threshold, fallback_to_complete=True,
+        df,
+        splits,
+        [first.feature_set],
+        profiles,
+        model_names,
+        best_params,
+        threshold=first.threshold,
+        fallback_to_complete=True,
     )
     by_key = {s.key: s for s in splits}
     results["used_fallback"] = [

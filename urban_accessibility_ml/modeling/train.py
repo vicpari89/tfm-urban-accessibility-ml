@@ -54,7 +54,14 @@ def run_one(
     X_test, y_test = X.loc[split.test_ids], y.loc[split.test_ids]
 
     # 3. Train
-    model = _train(model_name, X_train, y_train, _params_for(hyperparameters, split, feature_set, model_name, threshold, fallback_to_complete))
+    model = _train(
+        model_name,
+        X_train,
+        y_train,
+        _params_for(
+            hyperparameters, split, feature_set, model_name, threshold, fallback_to_complete
+        ),
+    )
 
     # 4. Predict
     y_pred = model.predict(X_test)

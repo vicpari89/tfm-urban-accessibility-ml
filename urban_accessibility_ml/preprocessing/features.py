@@ -45,8 +45,9 @@ def dimensions_for(feature_set: str, threshold: int | None = None) -> list[str]:
     ]
 
 
-
-def sensitivity_sets(thresholds: list[int] | None = None) -> tuple[pd.DataFrame, list[tuple[str, ...]]]:
+def sensitivity_sets(
+    thresholds: list[int] | None = None,
+) -> tuple[pd.DataFrame, list[tuple[str, ...]]]:
     """
     Feature sets (all but "completo") of each threshold, for the sensitivity analysis.
 
@@ -65,7 +66,12 @@ def sensitivity_sets(thresholds: list[int] | None = None) -> tuple[pd.DataFrame,
             if not dims:
                 continue
             rows.append(
-                {"threshold": t, "feature_set": fs, "dimensions": dims, "duplicate_of": seen.get(dims)}
+                {
+                    "threshold": t,
+                    "feature_set": fs,
+                    "dimensions": dims,
+                    "duplicate_of": seen.get(dims),
+                }
             )
             seen.setdefault(dims, fs)
     table = pd.DataFrame(rows, columns=["threshold", "feature_set", "dimensions", "duplicate_of"])

@@ -54,7 +54,16 @@ def run_experiments(
     # 3. One run_one per combination, with a progress bar
     combinations = list(product(splits, feature_sets, profiles, model_names))
     rows = [
-        run_one(indexed, split, feature_set, profile, model_name, hyperparameters, threshold, fallback_to_complete)
+        run_one(
+            indexed,
+            split,
+            feature_set,
+            profile,
+            model_name,
+            hyperparameters,
+            threshold,
+            fallback_to_complete,
+        )
         for split, feature_set, profile, model_name in tqdm(combinations, desc="experiments")
     ]
     return pd.DataFrame(rows)
