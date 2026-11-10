@@ -61,6 +61,8 @@ VIABILITY = {
 
 # Threshold for adding a dimension as viable
 THRESHOLD = 50
+# Thresholds of the sensitivity analysis (THRESHOLD is the main one)
+THRESHOLDS = [40, THRESHOLD, 60, 75, 90]
 
 # Feature sets
 FEATURE_SETS = ["cartografico_aereo", "calle", "combinado", "completo"]

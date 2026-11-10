@@ -108,11 +108,11 @@ def _to_python(value):
     raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
 
 
-def tuning_key(split: Split, feature_set: str, model: str) -> str:
+def tuning_key(split: Split, feature_set: str, model: str, threshold: int | None = None) -> str:
     """
     Key of a tuning in best_params.json, e.g. "within_city/Albacete/0|cruces,mobiliario|lightgbm".
     It uses the dimensions of the feature set, not its name: sets with the same dimensions share
     the tuning.
     """
-    dimensions = ",".join(sorted(dimensions_for(feature_set)))
+    dimensions = ",".join(sorted(dimensions_for(feature_set, threshold)))
     return f"{split.key}|{dimensions}|{model}"
