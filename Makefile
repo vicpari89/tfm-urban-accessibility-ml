@@ -92,6 +92,11 @@ experiments: requirements
 	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.modeling.experiments_run
 
 
+## Run the matrix for the feature sets of every viability threshold (sensitivity analysis) and write reports/results/sensitivity.csv
+.PHONY: sensitivity
+sensitivity: requirements
+	$(PYTHON_INTERPRETER) -m urban_accessibility_ml.modeling.sensitivity_run
+
 ## Build the documentation site in docs/site/ (runs the notebooks; EXECUTE=0 skips it)
 .PHONY: docs
 docs:
