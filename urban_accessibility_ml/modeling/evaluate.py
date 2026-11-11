@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import balanced_accuracy_score, cohen_kappa_score, f1_score
 
-from urban_accessibility_ml.config import CLASS_ORDER, METRICS
+from urban_accessibility_ml.config import CLASS_ORDER, CLEARLY_INFERIOR_RATIO, METRICS
 
 KAPPA_LABELS = list(
     range(len(CLASS_ORDER))
@@ -60,3 +60,26 @@ def summarize_folds(results: pd.DataFrame, group_cols: list[str]) -> pd.DataFram
     summary = results.groupby(group_cols)[METRICS].agg(["mean", "std"])
     summary.columns = [f"{metric}_{stat}" for metric, stat in summary.columns]
     return summary.reset_index()
+
+
+def cases_below(summary: pd.DataFrame, model: str) -> pd.DataFrame:
+    """
+    Cases of one model whose macro F1 is below CLEARLY_INFERIOR_RATIO of the complete set.
+    :param summary: output of summarize_folds grouped by strategy, profile, feature_set and model.
+    :param model: model to check.
+    :return: one row per case (strategy, feature_set, profile), with its macro F1 and the 80 % limit.
+    """
+    data = summary[summary["model"] == model]
+    reference = data[data["feature_set"] == "completo"][["strategy", "profile", "f1_macro_mean"]]
+    subsets = data[data["feature_set"] != "completo"].merge(
+        reference, on=["strategy", "profile"], suffixes=("", "_completo")
+    )
+    subsets["80 % de completo"] = CLEARLY_INFERIOR_RATIO * subsets["f1_macro_mean_completo"]
+    below = subsets[subsets["f1_macro_mean"] < subsets["80 % de completo"]]
+    columns = ["strategy", "feature_set", "profile", "f1_macro_mean", "80 % de completo"]
+    return (
+        below[columns]
+        .rename(columns={"f1_macro_mean": "F1 macro"})
+        .round(3)
+        .reset_index(drop=True)
+    )

@@ -6,6 +6,7 @@ from urban_accessibility_ml.config import METRICS
 from urban_accessibility_ml.modeling.evaluate import (
     METRIC_FUNCTIONS,
     balanced_accuracy,
+    cases_below,
     evaluate,
     macro_f1,
     quadratic_weighted_kappa,
@@ -161,3 +162,19 @@ def test_summarize_folds_does_not_modify_input():
     before = df.copy()
     summarize_folds(df, ["model"])
     pd.testing.assert_frame_equal(df, before)
+
+
+# --- cases_below -------------------------------------------------------------------------------
+
+
+def test_cases_below_flags_only_sets_under_80_percent_of_complete():
+    rows = [
+        ("within_city", "global", "completo", "m", 1.0),
+        ("within_city", "global", "calle", "m", 0.79),  # below 0.8
+        ("within_city", "global", "combinado", "m", 0.80),  # exactly 80 %, not below
+        ("within_city", "global", "calle", "other", 0.1),  # other model, ignored
+    ]
+    summary = pd.DataFrame(rows, columns=["strategy", "profile", "feature_set", "model", "f1_macro_mean"])
+    out = cases_below(summary, "m")
+    assert out["feature_set"].tolist() == ["calle"]
+    assert out["80 % de completo"].tolist() == [0.8]
