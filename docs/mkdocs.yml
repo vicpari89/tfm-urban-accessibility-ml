@@ -28,3 +28,4 @@ nav:
       - "0.11 Ajuste de hiperparámetros": notebooks/0.11-hyperparameter-tuning.ipynb
       - "0.12 Matriz con hiperparámetros ajustados": notebooks/0.12-tuned-experiment-matrix.ipynb
       - "0.13 Variantes del ajuste": notebooks/0.13-tuning-variants.ipynb
+      - "0.14 Sensibilidad al umbral": notebooks/0.14-threshold-sensitivity.ipynb
