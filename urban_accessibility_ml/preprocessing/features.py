@@ -15,11 +15,12 @@ from urban_accessibility_ml.config import (
     PROFILES,
     TARGET_COLUMNS,
     THRESHOLD,
+    THRESHOLDS,
     VIABILITY,
 )
 
 
-def dimensions_for(feature_set: str) -> list[str]:
+def dimensions_for(feature_set: str, threshold: int | None = None) -> list[str]:
     """
     Dimensions usable as inputs in a feature set. A dimension is viable from a source when
     VIABILITY[dimension][source] >= THRESHOLD.
@@ -27,7 +28,9 @@ def dimensions_for(feature_set: str) -> list[str]:
     - calle: viable from the street-level imagery.
     - combinado: viable from any of the three sources.
     - completo: all the dimensions.
+    threshold=None uses config.THRESHOLD.
     """
+    threshold = THRESHOLD if threshold is None else threshold
     sources = {
         "cartografico_aereo": ["cartografia", "aerea"],
         "calle": ["calle"],
@@ -38,8 +41,41 @@ def dimensions_for(feature_set: str) -> list[str]:
     if feature_set == "completo":
         return list(DIMENSIONS)
     return [
-        d for d in DIMENSIONS if max(VIABILITY[d][s] for s in sources[feature_set]) >= THRESHOLD
+        d for d in DIMENSIONS if max(VIABILITY[d][s] for s in sources[feature_set]) >= threshold
     ]
+
+
+def sensitivity_sets(
+    thresholds: list[int] | None = None,
+) -> tuple[pd.DataFrame, list[tuple[str, ...]]]:
+    """
+    Feature sets (all but "completo") of each threshold, for the sensitivity analysis.
+
+    Empty sets are dropped. duplicate_of is the earlier set of the same threshold with the same
+    dimensions (e.g. combinado == calle), None otherwise.
+
+    :param thresholds: None uses config.THRESHOLDS.
+    :return: (table with threshold, feature_set, dimensions, duplicate_of; the distinct
+        dimension tuples across all thresholds, to avoid recomputing).
+    """
+    rows = []
+    for t in THRESHOLDS if thresholds is None else thresholds:
+        seen: dict[tuple[str, ...], str] = {}
+        for fs in (f for f in FEATURE_SETS if f != "completo"):
+            dims = tuple(dimensions_for(fs, t))
+            if not dims:
+                continue
+            rows.append(
+                {
+                    "threshold": t,
+                    "feature_set": fs,
+                    "dimensions": dims,
+                    "duplicate_of": seen.get(dims),
+                }
+            )
+            seen.setdefault(dims, fs)
+    table = pd.DataFrame(rows, columns=["threshold", "feature_set", "dimensions", "duplicate_of"])
+    return table, list(dict.fromkeys(table["dimensions"]))
 
 
 def encode_class(classes: pd.Series) -> pd.Series:
@@ -61,7 +97,11 @@ def check_columns(df: pd.DataFrame, columns: list[str]) -> None:
 
 
 def get_xy(
-    df: pd.DataFrame, feature_set: str, profile: str, include_all_profiles: bool = False
+    df: pd.DataFrame,
+    feature_set: str,
+    profile: str,
+    include_all_profiles: bool = False,
+    threshold: int | None = None,
 ) -> tuple[pd.DataFrame, pd.Series]:
     """
     Inputs X and target y for a feature set and a profile.
@@ -69,6 +109,7 @@ def get_xy(
     :param feature_set: Feature set with values "cartografico_aereo", "calle", "combinado", "completo".
     :param profile: one of the profiles: "global", "funcional", "sensorial", "cognitiva".
     :param include_all_profiles: Include or not all the profiles. False by default.
+    :param threshold: Viability threshold. None: config.THRESHOLD.
     :return: inputs set for X, class for Y.
     """
 
@@ -79,7 +120,7 @@ def get_xy(
         raise ValueError
 
     # 2. Get the dimensions of this feature set
-    dimensions = dimensions_for(feature_set)
+    dimensions = dimensions_for(feature_set, threshold)
 
     # 3. Get column names
     if include_all_profiles:

@@ -27,6 +27,8 @@ def run_one(
     profile: str,
     model_name: str,
     hyperparameters: dict | None = None,
+    threshold: int | None = None,
+    fallback_to_complete: bool = False,
 ) -> dict:
     """
     Train and evaluate one experiment on one split.
@@ -37,19 +39,29 @@ def run_one(
     :param profile: which profile: one of config.PROFILES.
     :param model_name: model to train: one of the keys of modeling.models.BUILDERS.
     :param hyperparameters: {tuning_key: params} (best_params.json). None: the model defaults.
+    :param threshold: viability threshold of the feature set. None: config.THRESHOLD.
+    :param fallback_to_complete: if the combination has no entry in hyperparameters, use the
+        one of "completo" (same partition and model) instead of raising KeyError.
     :return: one result row, a dict with the experiment (strategy, name, fold, feature_set,
         profile, model), the size of each set (n_train, n_test) and one value per metric of
         config.METRICS.
     """
     # 1. X and y, for all the rows
-    X, y = get_xy(df, feature_set, profile)
+    X, y = get_xy(df, feature_set, profile, threshold=threshold)
 
     # 2. Rows of train/test
     X_train, y_train = X.loc[split.train_ids], y.loc[split.train_ids]
     X_test, y_test = X.loc[split.test_ids], y.loc[split.test_ids]
 
     # 3. Train
-    model = _train(model_name, X_train, y_train, _params_for(hyperparameters, split, feature_set, model_name))
+    model = _train(
+        model_name,
+        X_train,
+        y_train,
+        _params_for(
+            hyperparameters, split, feature_set, model_name, threshold, fallback_to_complete
+        ),
+    )
 
     # 4. Predict
     y_pred = model.predict(X_test)
@@ -72,17 +84,25 @@ def run_one(
 
 
 def _params_for(
-    hyperparameters: dict | None, split: Split, feature_set: str, model_name: str
+    hyperparameters: dict | None,
+    split: Split,
+    feature_set: str,
+    model_name: str,
+    threshold: int | None = None,
+    fallback_to_complete: bool = False,
 ) -> dict | None:
     """
     The tuned hyperparameters of a model in a split and feature set.
 
     :return: None if there are no hyperparameters or the model is not tuned (dummy).
-    :raises KeyError: if a tuned model has no entry.
+    :raises KeyError: if a tuned model has no entry (and, with fallback_to_complete, neither
+        has "completo").
     """
     if hyperparameters is None or model_name not in SEARCH_SPACES:
         return None
-    key = tuning_key(split, feature_set, model_name)
+    key = tuning_key(split, feature_set, model_name, threshold)
+    if key not in hyperparameters and fallback_to_complete:
+        key = tuning_key(split, "completo", model_name)
     if key not in hyperparameters:
         raise KeyError(f"No hyperparameters for {key}")
     return hyperparameters[key]

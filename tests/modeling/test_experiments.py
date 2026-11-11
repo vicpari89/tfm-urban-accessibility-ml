@@ -102,3 +102,21 @@ def test_run_experiments_with_tuned_params_end_to_end(city_df):
     )
     assert len(results) == len(splits) * 2
 
+
+
+def test_run_experiments_passes_threshold_to_every_run(city_df, monkeypatch):
+    received = []
+    monkeypatch.setattr(experiments, "run_one", lambda *a: received.append(a[6]) or {"model": a[4]})
+    run_experiments(
+        city_df, build_all_splits(city_df)[:1], [FEATURE_SET], [PROFILE], ["dummy"], threshold=75
+    )
+    assert received == [75]
+
+
+def test_run_experiments_passes_fallback_to_every_run(city_df, monkeypatch):
+    received = []
+    monkeypatch.setattr(experiments, "run_one", lambda *a: received.append(a[7]) or {"model": a[4]})
+    splits = build_all_splits(city_df)[:1]
+    run_experiments(city_df, splits, [FEATURE_SET], [PROFILE], ["dummy"], fallback_to_complete=True)
+    run_experiments(city_df, splits, [FEATURE_SET], [PROFILE], ["dummy"])
+    assert received == [True, False]

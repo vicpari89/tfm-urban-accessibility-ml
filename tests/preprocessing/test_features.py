@@ -184,3 +184,90 @@ class TestFeatureSetsWithConfigThreshold:
 
     def test_combinado_equals_calle(self):
         assert dimensions_for("combinado") == dimensions_for("calle")
+
+
+# --- explicit threshold --------------------------------------------------------------------------
+
+
+def test_dimensions_for_threshold_argument_beats_config():
+    # the module fixture pins THRESHOLD at 40; the argument wins
+    assert dimensions_for("cartografico_aereo", 75) == []
+    assert dimensions_for("calle", 50) == ["anchura", "cruces", "senalizacion", "mobiliario"]
+
+
+def test_dimensions_for_threshold_none_uses_config():
+    assert dimensions_for("calle", None) == dimensions_for("calle")
+
+
+def test_get_xy_threshold(df):
+    X, _ = get_xy(df, "calle", "global", threshold=90)
+    assert list(X.columns) == ["puntuacion_anchura_global"]
+
+
+# --- sensitivity_sets (real VIABILITY values) ----------------------------------------------------
+
+from urban_accessibility_ml.config import THRESHOLDS  # noqa: E402
+from urban_accessibility_ml.preprocessing.features import sensitivity_sets  # noqa: E402
+
+# threshold -> {feature_set: dimensions}; cartografico_aereo is missing when it is empty
+SENSITIVITY_EXPECTED = {
+    40: {
+        "cartografico_aereo": ["anchura", "pavimento", "cruces", "mobiliario"],
+        "calle": ["pendiente", "anchura", "cruces", "senalizacion", "mobiliario"],
+        "combinado": ["pendiente", "anchura", "pavimento", "cruces", "senalizacion", "mobiliario"],
+    },
+    50: {
+        "cartografico_aereo": ["cruces", "mobiliario"],
+        "calle": ["anchura", "cruces", "senalizacion", "mobiliario"],
+        "combinado": ["anchura", "cruces", "senalizacion", "mobiliario"],
+    },
+    60: {
+        "cartografico_aereo": ["cruces", "mobiliario"],
+        "calle": ["anchura", "mobiliario"],
+        "combinado": ["anchura", "cruces", "mobiliario"],
+    },
+    75: {"calle": ["anchura", "mobiliario"], "combinado": ["anchura", "mobiliario"]},
+    90: {"calle": ["anchura"], "combinado": ["anchura"]},
+}
+
+
+def test_sensitivity_expected_covers_every_threshold():
+    assert set(SENSITIVITY_EXPECTED) == set(THRESHOLDS)
+
+
+@pytest.mark.parametrize("threshold", THRESHOLDS)
+def test_sensitivity_sets_per_threshold(threshold):
+    table, _ = sensitivity_sets()
+    got = table[table.threshold == threshold]
+    assert {r.feature_set: list(r.dimensions) for r in got.itertuples()} == (
+        SENSITIVITY_EXPECTED[threshold]
+    )
+
+
+def test_sensitivity_sets_drops_empty_set():
+    table, _ = sensitivity_sets([75])
+    assert "cartografico_aereo" not in set(table.feature_set)
+    assert all(len(d) > 0 for d in table.dimensions)
+
+
+def test_sensitivity_sets_marks_combinado_equal_to_calle():
+    table, _ = sensitivity_sets([50])
+    dup = table.set_index("feature_set").duplicate_of
+    assert dup["combinado"] == "calle"
+    assert dup[["cartografico_aereo", "calle"]].isna().all()
+
+
+def test_sensitivity_sets_never_includes_completo():
+    table, _ = sensitivity_sets()
+    assert "completo" not in set(table.feature_set)
+
+
+def test_sensitivity_sets_unique_has_no_repeats_and_covers_the_table():
+    table, unique = sensitivity_sets()
+    assert len(unique) == len(set(unique))
+    assert set(unique) == set(table.dimensions)
+
+
+def test_sensitivity_sets_default_thresholds_come_from_config():
+    table, _ = sensitivity_sets()
+    assert sorted(set(table.threshold)) == sorted(THRESHOLDS)

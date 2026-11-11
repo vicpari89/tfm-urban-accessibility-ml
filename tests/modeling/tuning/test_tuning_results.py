@@ -111,6 +111,26 @@ class TestTuningKey:
             == "within_city/Albacete/0|cruces,mobiliario|random_forest"
         )
 
+    def test_threshold_changes_the_dimensions_in_the_key(self):
+        assert (
+            tuning_key(self.split, "calle", "lightgbm", 60)
+            == "within_city/Albacete/0|anchura,mobiliario|lightgbm"
+        )
+
+    def test_threshold_none_uses_config_and_completo_ignores_it(self):
+        assert tuning_key(self.split, "calle", "lightgbm", None) == tuning_key(
+            self.split, "calle", "lightgbm"
+        )
+        assert tuning_key(self.split, "completo", "lightgbm", 90) == tuning_key(
+            self.split, "completo", "lightgbm"
+        )
+
+    def test_sets_with_the_same_dimensions_share_the_key_across_thresholds(self):
+        # calle at 60 and at 75 are both anchura,mobiliario
+        assert tuning_key(self.split, "calle", "lightgbm", 75) == tuning_key(
+            self.split, "calle", "lightgbm", 60
+        )
+
 
 class TestSaveTuning:
     split = Split("within_city", "Albacete", 0, np.array([]), np.array([]))
