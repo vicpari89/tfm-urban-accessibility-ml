@@ -15,7 +15,9 @@ TUNING_TIE_TOLERANCE = 0.005  # candidates this close to the best are a tie: the
 TUNING_FEATURE_SET = "completo"  # reference feature set and profile of the tuning
 TUNING_PROFILE = "global"
 # Order of the tuning: the reference set first, then the others
-TUNING_FEATURE_SET_ORDER = [TUNING_FEATURE_SET] + [f for f in FEATURE_SETS if f != TUNING_FEATURE_SET]
+TUNING_FEATURE_SET_ORDER = [TUNING_FEATURE_SET] + [
+    f for f in FEATURE_SETS if f != TUNING_FEATURE_SET
+]
 
 C_VALUES = [0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000]
 

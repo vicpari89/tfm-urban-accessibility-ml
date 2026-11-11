@@ -63,6 +63,8 @@ VIABILITY = {
 THRESHOLD = 50
 # Thresholds of the sensitivity analysis (THRESHOLD is the main one)
 THRESHOLDS = [40, THRESHOLD, 60, 75, 90]
+# Refutation criterion of the thesis
+CLEARLY_INFERIOR_RATIO = 0.8
 
 # Feature sets
 FEATURE_SETS = ["cartografico_aereo", "calle", "combinado", "completo"]
