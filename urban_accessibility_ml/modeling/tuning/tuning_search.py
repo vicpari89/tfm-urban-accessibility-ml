@@ -106,6 +106,7 @@ def tune_partition(
     seed: int | None = None,
     n_candidates: int | None = None,
     models: list[str] | None = None,
+    threshold: int | None = None,
 ) -> tuple[dict, pd.DataFrame]:
     """
     Tune every model of SEARCH_SPACES with the TRAIN rows of one partition and feature set.
@@ -118,10 +119,11 @@ def tune_partition(
     :param seed: see tune_model.
     :param n_candidates: see tune_model.
     :param models: models to tune. By default all of SEARCH_SPACES.
+    :param threshold: viability threshold of the feature set. None: config.THRESHOLD.
     :return: (best_params, candidates). best_params is {model: params}. candidates joins the
         candidates of every model, with the columns strategy, name, fold and model.
     """
-    X_train, y_train, groups_train = train_data(df, split, feature_set)
+    X_train, y_train, groups_train = train_data(df, split, feature_set, threshold)
 
     best_params, tables = {}, []
     for model_name in SEARCH_SPACES if models is None else models:
@@ -136,9 +138,9 @@ def tune_partition(
     return best_params, pd.concat(tables, ignore_index=True)
 
 
-def train_data(df: pd.DataFrame, split: Split, feature_set: str):
+def train_data(df: pd.DataFrame, split: Split, feature_set: str, threshold: int | None = None):
     """X_train, y_train and the street of each train row (df indexed by key_tramo)."""
-    X, y = get_xy(df, feature_set, TUNING_PROFILE)
+    X, y = get_xy(df, feature_set, TUNING_PROFILE, threshold=threshold)
     return X.loc[split.train_ids], y.loc[split.train_ids], df.loc[split.train_ids, STREET_COL]
 
 

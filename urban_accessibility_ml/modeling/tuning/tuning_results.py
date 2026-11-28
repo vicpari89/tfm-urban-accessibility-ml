@@ -54,9 +54,11 @@ def save_candidates(candidates: pd.DataFrame, path: str | Path) -> Path:
     return path
 
 
-def is_tuned(best_params: dict, split: Split, feature_set: str, models) -> bool:
+def is_tuned(
+    best_params: dict, split: Split, feature_set: str, models, threshold: int | None = None
+) -> bool:
     """True if best_params already has every model for this partition and feature set."""
-    return all(tuning_key(split, feature_set, m) in best_params for m in models)
+    return all(tuning_key(split, feature_set, m, threshold) in best_params for m in models)
 
 
 def save_tuning(
@@ -66,22 +68,27 @@ def save_tuning(
     candidates: pd.DataFrame,
     best_params_path: str | Path,
     candidates_path: str | Path,
+    threshold: int | None = None,
 ) -> None:
     """
     Add the result of one (partition, feature set) to the two files. The best params are written
     last: a tuning counts as done (is_tuned) only when they are there.
+
+    With a threshold (a set of the sensitivity analysis) the feature_set column of the candidates
+    is e.g. "calle@40", so it does not replace the "calle" of the main threshold.
     """
     best_params_path, candidates_path = Path(best_params_path), Path(candidates_path)
     unit = ["strategy", "name", "fold", "feature_set"]
-    new = _params_as_text(candidates.assign(feature_set=feature_set))
+    label = feature_set if threshold is None else f"{feature_set}@{threshold}"
+    new = _params_as_text(candidates.assign(feature_set=label))
     if candidates_path.exists():
-        old = pd.read_csv(candidates_path)
+        old = pd.read_csv(candidates_path, float_precision="round_trip")  # keeps every decimal
         new = pd.concat([old[~(old[unit] == new[unit].iloc[0]).all(axis=1)], new])
     candidates_path.parent.mkdir(parents=True, exist_ok=True)
     _write_atomic(candidates_path, new.to_csv(index=False))
 
     saved = load_best_params(best_params_path) if best_params_path.exists() else {}
-    saved.update({tuning_key(split, feature_set, m): p for m, p in best_params.items()})
+    saved.update({tuning_key(split, feature_set, m, threshold): p for m, p in best_params.items()})
     save_best_params(saved, best_params_path)
 
 

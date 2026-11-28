@@ -11,6 +11,7 @@ from urban_accessibility_ml.modeling.tuning.tuning_constants import (
     TUNING_N_CANDIDATES,
 )
 from urban_accessibility_ml.modeling.tuning.tuning_search import _pick_best, time_candidate, tune_model, tune_partition
+from urban_accessibility_ml.preprocessing.features import dimensions_for
 from urban_accessibility_ml.preprocessing.split import Split, build_all_splits
 
 N_ROWS_PER_CLASS = {0: 60, 1: 45, 2: 15}  # C, B, A: imbalanced like the real data
@@ -511,6 +512,20 @@ class TestTunePartition:
         tune_partition(city_df, split, "cartografico_aereo", n_jobs=2)
         columns = ["puntuacion_cruces_global", "puntuacion_mobiliario_global"]
         assert seen[0] == (columns, 2)  # only those dimensions, and the n_jobs reaches the model
+
+    def test_threshold_changes_the_dimensions_of_the_feature_set(self, city_df, tiny_all, monkeypatch):
+        split = build_all_splits(city_df)[0]
+        seen = []
+
+        def spy(model_name, X_train, y_train, groups_train, n_jobs=1, seed=None, n_candidates=None):
+            seen.append(list(X_train.columns))
+            return fake_table()
+
+        monkeypatch.setattr(tuning, "tune_model", spy)
+        tune_partition(city_df, split, "calle", threshold=90)
+        tune_partition(city_df, split, "calle")
+        columns_90 = [f"puntuacion_{d}_global" for d in dimensions_for("calle", 90)]
+        assert seen[0] == columns_90 and seen[-1] != columns_90
 
     def test_tunes_only_the_models_asked_for(self, city_df, tiny_all):
         split = build_all_splits(city_df)[0]

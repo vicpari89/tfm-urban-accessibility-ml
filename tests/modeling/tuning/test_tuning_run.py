@@ -1,3 +1,4 @@
+import json
 import os
 import warnings
 
@@ -16,8 +17,12 @@ from urban_accessibility_ml.modeling.tuning.tuning_run import (
     estimate_seconds,
     app,
     run_tuning,
+    sensitivity_units,
+    tuning_units,
 )
+from urban_accessibility_ml.preprocessing.features import dimensions_for, sensitivity_sets
 from urban_accessibility_ml.preprocessing.split import build_all_splits
+from urban_accessibility_ml.config import FEATURE_SETS
 
 
 @pytest.fixture
@@ -25,13 +30,18 @@ def fake_partition(monkeypatch):
     """tune_partition replaced by a fast fake that records (partition, feature set, n_jobs)."""
     class Calls(list):
         extra = []  # (seed, n_candidates, models) of each call
+        thresholds = []  # threshold of each call
 
     calls = Calls()
     calls.extra = []
+    calls.thresholds = []
 
-    def fake(df, split, feature_set, n_jobs=1, seed=None, n_candidates=None, models=None):
+    def fake(
+        df, split, feature_set, n_jobs=1, seed=None, n_candidates=None, models=None, threshold=None
+    ):
         calls.append((split.key, feature_set, n_jobs))
         calls.extra.append((seed, n_candidates, models))
+        calls.thresholds.append(threshold)
         models = list(SEARCH_SPACES) if models is None else models
         table = pd.DataFrame(
             {
@@ -157,6 +167,71 @@ class TestRunTuning:
         assert BEST_PARAMS_FILE.name == "best_params.json"
 
 
+class TestSensitivitySets:
+    def test_units_are_the_distinct_sets_that_the_main_threshold_and_completo_do_not_have(self):
+        tuned = {tuple(dimensions_for(fs)) for fs in FEATURE_SETS}
+        units = sensitivity_units()
+        dims = [tuple(dimensions_for(fs, t)) for fs, t in units]
+        assert units and len(set(dims)) == len(dims)  # each set once
+        assert not set(dims) & tuned  # none of the ones already tuned
+        assert all(t != 50 for _, t in units)
+
+    def test_every_set_of_the_sensitivity_is_tuned_by_the_main_ones_or_a_unit(self):
+        table, _ = sensitivity_sets()
+        covered = {tuple(dimensions_for(fs)) for fs in FEATURE_SETS}
+        covered |= {tuple(dimensions_for(fs, t)) for fs, t in sensitivity_units()}
+        assert set(table["dimensions"]) <= covered
+
+    def test_units_without_sensitivity_are_the_feature_sets_of_the_main_threshold(self):
+        assert tuning_units() == [(fs, None) for fs in ["completo", "cartografico_aereo", "calle", "combinado"]]
+        assert tuning_units(True) == tuning_units() + sensitivity_units()
+
+    def test_sensitivity_sets_are_tuned_after_the_others_with_their_threshold(
+        self, city_df, fake_partition, files
+    ):
+        run_tuning(city_df, *files, sensitivity=True)
+        n_splits, units = len(build_all_splits(city_df)), sensitivity_units()
+        first_sensitivity = 3 * n_splits  # completo, cartografico_aereo and calle go first
+        assert set(fake_partition.thresholds[:first_sensitivity]) == {None}
+        assert fake_partition.thresholds[first_sensitivity:] == [t for _, t in units for _ in range(n_splits)]
+        assert len(load_best_params(files[0])) == (3 + len(units)) * n_splits * len(SEARCH_SPACES)
+
+    def test_the_candidates_of_a_sensitivity_set_do_not_replace_the_main_ones(
+        self, city_df, fake_partition, files
+    ):
+        run_tuning(city_df, *files, sensitivity=True)
+        table = pd.read_csv(files[1])
+        labels = {f"{fs}@{t}" for fs, t in sensitivity_units()}
+        assert set(table["feature_set"]) == {"completo", "cartografico_aereo", "calle"} | labels
+
+    def test_the_main_tunings_are_not_touched_when_the_sensitivity_is_added_later(
+        self, city_df, fake_partition, files
+    ):
+        run_tuning(city_df, *files)
+        before = files[0].read_text()
+        fake_partition.clear()
+        fake_partition.thresholds.clear()
+        run_tuning(city_df, *files, sensitivity=True)
+        assert set(fake_partition.thresholds) == {t for _, t in sensitivity_units()}  # only the new
+        saved, kept = load_best_params(files[0]), json.loads(before)
+        assert all(saved[k] == v for k, v in kept.items())
+
+    def test_a_second_run_with_sensitivity_tunes_nothing(self, city_df, fake_partition, files):
+        run_tuning(city_df, *files, sensitivity=True)
+        fake_partition.clear()
+        run_tuning(city_df, *files, sensitivity=True)
+        assert fake_partition == []
+
+    def test_estimate_counts_the_sensitivity_sets(self, city_df, fake_partition):
+        splits, indexed = build_all_splits(city_df), tuning_run._index_by_key(city_df)
+        per_unit = 2.0 * 10 * len(SEARCH_SPACES)
+        n_sets = 3 + len(sensitivity_units())
+        seconds = estimate_seconds(
+            indexed, splits, {}, 2, list(SEARCH_SPACES), units=tuning_units(True)
+        )
+        assert seconds == per_unit * n_sets * len(splits) / 2
+
+
 class TestCommand:
     @pytest.fixture
     def dataset(self, city_df, tmp_path, monkeypatch):
@@ -179,11 +254,13 @@ class TestCommand:
         monkeypatch.setattr(
             tuning_run,
             "run_tuning",
-            lambda df, overwrite, n_jobs, dry_run: calls.append((len(df), overwrite, n_jobs, dry_run)),
+            lambda df, overwrite, n_jobs, dry_run, sensitivity: calls.append(
+                (len(df), overwrite, n_jobs, dry_run, sensitivity)
+            ),
         )
         result = CliRunner().invoke(app, args)
         assert result.exit_code == 0, result.output
-        assert calls == [(len(dataset), overwrite, n_jobs, dry_run)]
+        assert calls == [(len(dataset), overwrite, n_jobs, dry_run, True)]  # the command tunes the sensitivity too
 
     def test_fails_with_exit_code_1_if_the_dataset_is_missing(self, monkeypatch, tmp_path):
         monkeypatch.setattr(tuning_run, "UNIFIED_FILE", tmp_path / "does_not_exist.csv")

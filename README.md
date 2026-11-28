@@ -57,7 +57,7 @@ The models, the tuning and the experiment matrix are in `urban_accessibility_ml/
 
 | Command | What it does |
 |---|---|
-| `make tune` | Tunes the hyperparameters of logistic regression, random forest, XGBoost and LightGBM in each of the 17 partitions and each feature set (`calle` and `combinado` share it), using only their training rows. It saves each result when it ends and continues a stopped run. Writes `reports/results/best_params.json` and `reports/results/tuning-candidates.csv`. |
+| `make tune` | Tunes the hyperparameters of logistic regression, random forest, XGBoost and LightGBM in each of the 17 partitions and each feature set (`calle` and `combinado` share it) and each extra set of dimensions of the sensitivity analysis, using only their training rows. It saves each result when it ends and continues a stopped run. Writes `reports/results/best_params.json` and `reports/results/tuning-candidates.csv`. |
 | `make tune-variants` | Repeats the tuning of the three tree models with another seed and with 100 candidates, and runs the experiment matrix for each, to see how much the tuning depends on chance (about an hour). Continues a stopped run. Writes `best_params_*.json`, `tuning-candidates_*.csv` and `experiment-matrix_*.csv` in `reports/results/variants/`. |
 | `make experiments` | Runs the experiment matrix (5 models × 4 feature sets × 4 profiles × 17 partitions) twice, with the default and with the tuned hyperparameters (about 8 minutes). Writes `reports/results/experiment-matrix-default.csv` and `reports/results/experiment-matrix-tuned.csv`. |
 

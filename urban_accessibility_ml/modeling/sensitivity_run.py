@@ -33,12 +33,15 @@ def run_sensitivity(
 ) -> pd.DataFrame:
     """
     Run the matrix once per distinct set of dimensions (sensitivity_sets) and copy the results to
-    every threshold and feature set that has them. Hyperparameters fall back to the "completo" ones.
+    every threshold and feature set that has them. Every set uses its own tuned hyperparameters
+    (make tune); a set without them raises a KeyError.
 
     :param df: unified dataset.
     :param best_params: {tuning_key: params} (best_params.json).
     :param splits, profiles, model_names: None runs the whole matrix.
-    :return: results with threshold, feature_set and dimensions first, used_fallback last.
+    :return: results with threshold, feature_set and dimensions first, used_fallback last (False
+        in every row, since there is no fallback).
+    :raises KeyError: if a tuned model has no hyperparameters for its set.
     """
     table, unique = sensitivity_sets()
     splits = build_all_splits(df) if splits is None else splits
@@ -60,7 +63,7 @@ def _run_set(df, splits, first, best_params, profiles, model_names) -> pd.DataFr
         model_names,
         best_params,
         threshold=first.threshold,
-        fallback_to_complete=True,
+        fallback_to_complete=False,
     )
     by_key = {s.key: s for s in splits}
     results["used_fallback"] = [

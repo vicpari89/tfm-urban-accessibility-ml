@@ -151,11 +151,31 @@ class TestSaveTuning:
         assert not is_tuned(best, self.other, "calle", models)
         assert not is_tuned(best, self.split, "calle", models + ["lightgbm"])
 
+    def test_threshold_saves_under_the_key_of_its_dimensions_and_labels_the_candidates(
+        self, candidates, files
+    ):
+        save_tuning(self.split, "calle", self.best, candidates, *files)
+        save_tuning(self.split, "calle", self.best, candidates, *files, threshold=90)
+        best, models = load_best_params(files[0]), ["xgboost_balanced"]
+        assert is_tuned(best, self.split, "calle", models, 90)
+        assert is_tuned(best, self.split, "calle", models)  # the main one is still there
+        assert len(best) == 2  # different dimensions, different key
+        table = pd.read_csv(files[1])
+        assert set(table["feature_set"]) == {"calle", "calle@90"}  # the 50 % was not replaced
+        assert len(table) == 4
+
     def test_keeps_what_was_already_saved(self, candidates, files):
         save_tuning(self.split, "calle", self.best, candidates, *files)
         save_tuning(self.other, "calle", self.best, candidates.assign(fold=1), *files)
         assert len(load_best_params(files[0])) == 2
         assert pd.read_csv(files[1])["fold"].tolist() == [0, 0, 1, 1]
+
+    def test_the_candidates_already_saved_keep_every_decimal(self, candidates, files):
+        precise = candidates.assign(f1_macro_mean=[0.30252771764638114, 0.014824664035561135])
+        save_tuning(self.split, "calle", self.best, precise, *files)
+        before = files[1].read_text()
+        save_tuning(self.other, "calle", self.best, precise.assign(fold=1), *files)
+        assert files[1].read_text().startswith(before.rstrip("\n"))
 
     def test_saving_the_same_one_again_does_not_duplicate_candidates(self, candidates, files):
         for _ in range(2):

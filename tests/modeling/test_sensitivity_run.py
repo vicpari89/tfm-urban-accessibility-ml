@@ -44,18 +44,27 @@ def test_duplicates_share_the_results(city_df, splits):
     pd.testing.assert_series_equal(calle.f1_macro, comb.f1_macro)
 
 
-def test_used_fallback_true_only_for_tuned_models_without_own_entry(city_df, splits):
-    # tuned logistic_regression for calle@50 and completo only; the rest must fall back
+def test_a_tuned_model_without_hyperparameters_for_its_set_raises_instead_of_falling_back(
+    city_df, splits
+):
+    # logistic_regression tuned for completo and calle@50 only: the other sets have no entry
     best = {}
     for s in splits:
         best[tuning_key(s, "completo", "logistic_regression")] = {"C": 0.1}
         best[tuning_key(s, "calle", "logistic_regression", 50)] = {"C": 1}
+    with pytest.raises(KeyError):
+        run_sensitivity(city_df, best, splits, ["global"], ["logistic_regression"])
+
+
+def test_used_fallback_is_false_in_every_row_when_every_set_has_its_own_tuning(city_df, splits):
+    table, _ = sensitivity_sets()
+    best = {
+        tuning_key(s, r.feature_set, "logistic_regression", r.threshold): {"C": 1}
+        for s in splits
+        for r in table.itertuples()
+    }
     out = run_sensitivity(city_df, best, splits, ["global"], ["dummy", "logistic_regression"])
-    lr = out[out.model == "logistic_regression"]
-    own = lr[(lr.threshold == 50) & (lr.feature_set.isin(["calle", "combinado"]))]
-    assert not own.used_fallback.any()
-    assert lr[~lr.index.isin(own.index)].used_fallback.all()
-    assert not out[out.model == "dummy"].used_fallback.any()
+    assert "used_fallback" in out.columns and not out.used_fallback.any()
 
 
 def test_cli_refuses_to_overwrite(tmp_path):
