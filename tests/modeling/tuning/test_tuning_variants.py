@@ -24,8 +24,8 @@ def main_file(tmp_path):
 
 @pytest.fixture
 def fakes(monkeypatch):
-    """run_tuning and run_experiments replaced by fast fakes that record their calls."""
-    calls = {"tuning": [], "experiments": []}
+    """run_tuning, run_experiments and run_sensitivity replaced by fast fakes that record their calls."""
+    calls = {"tuning": [], "experiments": [], "sensitivity": []}
 
     def fake_tuning(df, best, candidates, overwrite, n_jobs, dry_run, **options):
         calls["tuning"].append((best.name, overwrite, n_jobs, dry_run, options))
@@ -36,8 +36,13 @@ def fakes(monkeypatch):
         calls["experiments"].append(hyperparameters)
         return pd.DataFrame({"model": ["dummy"], "f1_macro": [0.5]})
 
+    def fake_sensitivity(df, hyperparameters, splits):
+        calls["sensitivity"].append(hyperparameters)
+        return pd.DataFrame({"model": ["dummy"], "f1_macro": [0.5], "used_fallback": [False]})
+
     monkeypatch.setattr(tuning_variants, "run_tuning", fake_tuning)
     monkeypatch.setattr(tuning_variants, "run_experiments", fake_experiments)
+    monkeypatch.setattr(tuning_variants, "run_sensitivity", fake_sensitivity)
     return calls
 
 
@@ -49,13 +54,25 @@ class TestRunVariants:
         assert [c[0] for c in fakes["tuning"]] == [f"best_params_{n}.json" for n in VARIANTS]
         for (_, _, n_jobs, _, options), name in zip(fakes["tuning"], VARIANTS):
             assert n_jobs == 3
-            assert options == {"models": TREE_MODELS, **VARIANTS[name]}
+            assert options == {"models": TREE_MODELS, "sensitivity": True, **VARIANTS[name]}
 
     def test_writes_one_matrix_per_variant(self, city_df, fakes, main_file, tmp_path):
         run_variants(city_df, None, main_file, tmp_path / "out")
         assert sorted(p.name for p in (tmp_path / "out").glob("experiment-matrix_*.csv")) == sorted(
             f"experiment-matrix_{n}.csv" for n in VARIANTS
         )
+
+    def test_writes_one_sensitivity_per_variant(self, city_df, fakes, main_file, tmp_path):
+        run_variants(city_df, None, main_file, tmp_path / "out")
+        assert sorted(p.name for p in (tmp_path / "out").glob("sensitivity_*.csv")) == sorted(
+            f"sensitivity_{n}.csv" for n in VARIANTS
+        )
+
+    def test_the_sensitivity_uses_the_same_hyperparameters_as_the_matrix(
+        self, city_df, fakes, main_file, tmp_path
+    ):
+        run_variants(city_df, ["seed2"], main_file, tmp_path / "out")
+        assert fakes["sensitivity"] == fakes["experiments"]
 
     def test_the_trees_come_from_the_variant_and_the_rest_from_the_main_tuning(
         self, city_df, fakes, main_file, tmp_path
@@ -73,20 +90,28 @@ class TestRunVariants:
     ):
         run_variants(city_df, ["seed2"], main_file, tmp_path / "out")
         run_variants(city_df, ["seed2"], main_file, tmp_path / "out")
-        assert len(fakes["experiments"]) == 1
+        assert len(fakes["experiments"]) == 1 and len(fakes["sensitivity"]) == 1
+
+    def test_a_missing_sensitivity_is_run_even_if_the_matrix_exists(
+        self, city_df, fakes, main_file, tmp_path
+    ):
+        run_variants(city_df, ["seed2"], main_file, tmp_path / "out")
+        (tmp_path / "out" / "sensitivity_seed2.csv").unlink()
+        run_variants(city_df, ["seed2"], main_file, tmp_path / "out")
+        assert len(fakes["experiments"]) == 1 and len(fakes["sensitivity"]) == 2
 
     def test_overwrite_runs_them_again_and_is_passed_to_the_tuning(
         self, city_df, fakes, main_file, tmp_path
     ):
         run_variants(city_df, ["seed2"], main_file, tmp_path / "out")
         run_variants(city_df, ["seed2"], main_file, tmp_path / "out", overwrite=True)
-        assert len(fakes["experiments"]) == 2
+        assert len(fakes["experiments"]) == 2 and len(fakes["sensitivity"]) == 2
         assert fakes["tuning"][-1][1] is True
 
     def test_dry_run_only_estimates(self, city_df, fakes, main_file, tmp_path):
         run_variants(city_df, None, main_file, tmp_path / "out", dry_run=True)
         assert all(c[3] for c in fakes["tuning"])
-        assert fakes["experiments"] == []
+        assert fakes["experiments"] == [] and fakes["sensitivity"] == []
         assert not (tmp_path / "out").exists()
 
     def test_unknown_variant_fails_before_tuning(self, city_df, fakes, main_file, tmp_path):

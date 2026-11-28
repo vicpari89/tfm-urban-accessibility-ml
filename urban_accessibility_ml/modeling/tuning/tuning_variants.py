@@ -1,5 +1,6 @@
 """Tuning of the tree models with another seed and with more candidates, to see how much the
-results depend on chance. The main tuning (make tune) is the reference.
+results depend on chance. The main tuning (make tune) is the reference. It covers the feature sets
+of the main threshold and the extra sets of the sensitivity analysis.
 
 make tune-variants
 """
@@ -14,6 +15,7 @@ import typer
 from urban_accessibility_ml.config import REPORTS_DIR
 from urban_accessibility_ml.data.pipeline import UNIFIED_FILE
 from urban_accessibility_ml.modeling.experiments import run_experiments, save_results
+from urban_accessibility_ml.modeling.sensitivity_run import run_sensitivity
 from urban_accessibility_ml.modeling.tuning.tuning_constants import (
     SEARCH_SPACES,
     TUNING_N_CANDIDATES,
@@ -48,8 +50,9 @@ def run_variants(
     dry_run: bool = False,
 ) -> None:
     """
-    For each variant, tune the tree models and run the experiment matrix with those values (and
-    the logistic regression of the main tuning). It continues where a stopped run was.
+    For each variant, tune the tree models (in the feature sets of the main threshold and in the
+    extra sets of the sensitivity) and run the experiment matrix and the sensitivity with those
+    values (and the logistic regression of the main tuning). It continues where a stopped run was.
 
     :param df: unified dataset.
     :param names: keys of VARIANTS. By default all.
@@ -72,18 +75,32 @@ def run_variants(
         best = out_dir / f"best_params_{name}.json"
         candidates = out_dir / f"tuning-candidates_{name}.csv"
         matrix = out_dir / f"experiment-matrix_{name}.csv"
+        sensitivity = out_dir / f"sensitivity_{name}.csv"
         run_tuning(
-            df, best, candidates, overwrite, n_jobs, dry_run, models=TREE_MODELS, **VARIANTS[name]
+            df,
+            best,
+            candidates,
+            overwrite,
+            n_jobs,
+            dry_run,
+            models=TREE_MODELS,
+            sensitivity=True,
+            **VARIANTS[name],
         )
         if dry_run:
             continue
-        if matrix.exists() and not overwrite:
-            logger.info(f"{matrix} already exists, skipped")
-            continue
         others = {k: v for k, v in main.items() if k.split("|")[2] not in TREE_MODELS}
         hyperparameters = {**others, **load_best_params(best)}
-        save_results(run_experiments(df, splits, hyperparameters=hyperparameters), matrix)
-        logger.info(f"Saved {matrix}")
+        if matrix.exists() and not overwrite:
+            logger.info(f"{matrix} already exists, skipped")
+        else:
+            save_results(run_experiments(df, splits, hyperparameters=hyperparameters), matrix)
+            logger.info(f"Saved {matrix}")
+        if sensitivity.exists() and not overwrite:
+            logger.info(f"{sensitivity} already exists, skipped")
+        else:
+            save_results(run_sensitivity(df, hyperparameters, splits), sensitivity)
+            logger.info(f"Saved {sensitivity}")
 
 
 @app.command()
@@ -95,7 +112,7 @@ def main(
     n_jobs: int = typer.Option(DEFAULT_N_JOBS, help="Candidates fitted in parallel."),
     dry_run: bool = typer.Option(False, help="Only estimate the time of the tuning."),
 ) -> None:
-    """Tune the tree models with another seed and with more candidates (takes about an hour)."""
+    """Tune the tree models with another seed and with more candidates (takes several hours)."""
     try:
         run_variants(
             pd.read_csv(UNIFIED_FILE),
